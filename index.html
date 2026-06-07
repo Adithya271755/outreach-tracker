@@ -1858,14 +1858,15 @@ function renderAnalytics() {
   const range = document.getElementById('analyticsRange');
   if (!chart) return;
 
-  const MAX_H   = 72;  // max bar height px
-  const WICK_PC = 0.18; // wick = 18% of body height
-  const ti = todayIdx();
+  const MAX_H = 72; // height when exactly at target
+  const ti    = todayIdx();
 
-  // Gather all days from campaign start to today
+  // Gather all days from campaign start to end of current month
+  const monthEnd = new Date(idxToDate(ti).getFullYear(), idxToDate(ti).getMonth()+1, 0);
+  const monthEndIdx = Math.round((monthEnd - CAMPAIGN_START) / 86400000);
   const days = [];
-  for (let i = 0; i <= ti; i++) {
-    days.push({ i, n: companyCount(i) });
+  for (let i = 0; i <= monthEndIdx; i++) {
+    days.push({ i, n: companyCount(i), future: i > ti });
   }
 
   if (days.length === 0) {
@@ -1873,51 +1874,53 @@ function renderAnalytics() {
     return;
   }
 
-  const maxN = Math.max(1, ...days.map(d => d.n));
+  const target   = Math.max(1, D.t);
   const startLbl = idxToDate(0).toLocaleDateString('en-US', { month:'short', day:'numeric' });
   const endLbl   = idxToDate(ti).toLocaleDateString('en-US', { month:'short', day:'numeric' });
   range.textContent = startLbl + ' – ' + endLbl;
 
   chart.innerHTML = '';
 
-  days.forEach(({ i, n }) => {
-    const st    = statusOf(i, n);
-    const bodyH = n === 0 ? 2 : Math.max(5, Math.round((n / maxN) * MAX_H));
-    const wickH = n === 0 ? 0 : Math.max(3, Math.round(bodyH * WICK_PC));
+  // Muted palette — fits dark aesthetic without neon pop
+  const COL_HIT  = '#2e6644'; // muted forest green
+  const COL_PROG = '#7a5c18'; // muted dark gold
+  const COL_MISS = '#6b2828'; // muted dark red
+  const COL_ZERO = '#1a1a1a'; // near-black
 
-    const color = n === 0       ? '#191919' :
-      st.gc === 's-hit'         ? 'var(--green)' :
-      st.gc === 's-prog'        ? 'var(--amber)' :
-      st.gc === 's-miss'        ? 'var(--red)'   : '#191919';
+  days.forEach(({ i, n, future }) => {
+    const st    = statusOf(i, n);
+    // Scale to target: target = full height, over target capped at ~120%
+    const ratio = n === 0 ? 0 : Math.min(1.2, n / target);
+    const bodyH = future ? 3 : (n === 0 ? 2 : Math.max(4, Math.round(ratio * MAX_H)));
+
+    const color = future           ? '#2a2a2a' :
+      n === 0                      ? COL_ZERO :
+      st.gc === 's-hit'            ? COL_HIT  :
+      st.gc === 's-prog'           ? COL_PROG :
+      st.gc === 's-miss'           ? COL_MISS : COL_ZERO;
 
     const date  = idxToDate(i);
     const label = date.toLocaleDateString('en-US', { month:'short', day:'numeric' });
 
     const candle = document.createElement('div');
     candle.className = 'analytics-candle';
-    candle.style.height = (MAX_H + wickH + 2) + 'px';
+    candle.style.height = (MAX_H + 4) + 'px';
 
-    // Tooltip
-    const tip = document.createElement('div');
-    tip.className = 'analytics-tooltip';
-    tip.textContent = label + ': ' + n + ' compan' + (n === 1 ? 'y' : 'ies');
-    candle.appendChild(tip);
-
-    // Wick (above body)
-    if (wickH > 0) {
-      const wick = document.createElement('div');
-      wick.className = 'analytics-wick';
-      wick.style.height = wickH + 'px';
-      wick.style.background = color;
-      wick.style.opacity = '0.35';
-      candle.appendChild(wick);
+    // Tooltip (past/today only)
+    if (!future) {
+      const tip = document.createElement('div');
+      tip.className = 'analytics-tooltip';
+      tip.textContent = label + ': ' + n + ' compan' + (n === 1 ? 'y' : 'ies');
+      candle.appendChild(tip);
     }
 
-    // Body
+    // Body — dot for future, bar for past
     const body = document.createElement('div');
     body.className = 'analytics-body';
-    body.style.height  = bodyH + 'px';
+    body.style.height     = bodyH + 'px';
     body.style.background = color;
+    body.style.width      = future ? '3px' : '6px';
+    body.style.borderRadius = future ? '50%' : '2px 2px 1px 1px';
     candle.appendChild(body);
 
     chart.appendChild(candle);
