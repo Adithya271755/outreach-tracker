@@ -1911,15 +1911,21 @@ function renderAnalytics() {
   const COL_FUTURE = '#333';
 
   // One flex:1 slot per day — mirrors the day-picker row exactly (gap:3px, flex:1 per cell)
+  // dash = no activity (future days OR past days with 0 companies)
+  // bar  = days with actual outreach logged
+  const BAR_W  = '8px';
+  const DASH_H = '3px';
+
   days.forEach(({ i, n, future }) => {
     const slot = document.createElement('div');
     slot.style.cssText =
       `flex:1; min-width:0; display:flex; flex-direction:column;` +
       `align-items:center; justify-content:flex-end; height:${MAX_H}px; position:relative; cursor:default;`;
 
-    if (future) {
+    if (future || n === 0) {
+      // Unified dash style — same color and size regardless of whether it's future or a zero-activity past day
       const dash = document.createElement('div');
-      dash.style.cssText = `width:calc(100% - 2px); height:3px; background:${COL_FUTURE}; border-radius:2px; flex-shrink:0;`;
+      dash.style.cssText = `width:${BAR_W}; height:${DASH_H}; background:${COL_FUTURE}; border-radius:2px; flex-shrink:0;`;
       slot.appendChild(dash);
     } else {
       const date  = idxToDate(i);
@@ -1930,16 +1936,15 @@ function renderAnalytics() {
       slot.appendChild(tip);
 
       const st    = statusOf(i, n);
-      const ratio = n === 0 ? 0 : Math.min(1.2, n / target);
-      const bodyH = n === 0 ? 2 : Math.max(4, Math.round(ratio * MAX_H));
-      const color = n === 0       ? COL_ZERO :
-        st.gc === 's-hit'         ? COL_HIT  :
-        st.gc === 's-prog'        ? COL_PROG :
-        st.gc === 's-miss'        ? COL_MISS : COL_ZERO;
+      const ratio = Math.min(1.2, n / target);
+      const bodyH = Math.max(4, Math.round(ratio * MAX_H));
+      const color = st.gc === 's-hit'  ? COL_HIT  :
+                    st.gc === 's-prog' ? COL_PROG :
+                    st.gc === 's-miss' ? COL_MISS : COL_FUTURE;
 
       const body = document.createElement('div');
       body.style.cssText =
-        `width:calc(100% - 2px); height:${bodyH}px; background:${color};` +
+        `width:${BAR_W}; height:${bodyH}px; background:${color};` +
         `border-radius:2px 2px 1px 1px; flex-shrink:0; transition:opacity 0.12s;`;
       slot.appendChild(body);
       slot.addEventListener('mouseenter', () => body.style.opacity = '0.65');
