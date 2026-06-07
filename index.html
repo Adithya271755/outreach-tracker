@@ -1948,10 +1948,10 @@ function renderAnalytics() {
   const futureDays = days.filter(d => d.future);
   if (futureDays.length > 0) {
     const dashRow = document.createElement('div');
-    dashRow.style.cssText = `display:flex; align-items:flex-end; justify-content:space-evenly; flex:1; min-width:0; height:${MAX_H + 4}px; padding-bottom:2px;`;
+    dashRow.style.cssText = `display:flex; align-items:flex-end; gap:4px; flex-shrink:0; height:${MAX_H + 4}px;`;
     futureDays.forEach(() => {
       const dash = document.createElement('div');
-      dash.style.cssText = `width:4px; height:2px; background:${COL_FUTURE}; border-radius:1px; flex-shrink:0;`;
+      dash.style.cssText = `width:6px; height:2px; background:${COL_FUTURE}; border-radius:2px 2px 1px 1px; flex-shrink:0;`;
       dashRow.appendChild(dash);
     });
     chart.appendChild(dashRow);
