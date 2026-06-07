@@ -486,6 +486,14 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
   syntax: '<angle>'; initial-value: 0deg; inherits: false;
 }
 @keyframes borderSpin { to { --border-angle: 360deg; } }
+@keyframes shake {
+  0%,100% { transform:translateX(0); }
+  18%     { transform:translateX(-7px); }
+  36%     { transform:translateX(7px); }
+  54%     { transform:translateX(-4px); }
+  72%     { transform:translateX(4px); }
+  90%     { transform:translateX(-2px); }
+}
 
 .login-overlay {
   position:fixed; inset:0; background:#0a0a0a;
@@ -548,10 +556,10 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 }
 .login-btn:hover { background:#fff; }
 .login-btn:disabled { opacity:0.4; cursor:default; }
-.login-error { font-size:11px; color:var(--red); text-align:center; min-height:16px; }
-.login-switch { font-size:11px; color:#333; text-align:center; margin-top:4px; }
-.login-switch span { color:#555; cursor:pointer; text-decoration:underline; }
-.login-switch span:hover { color:#888; }
+.login-input.error { border-color:var(--red) !important; color:var(--red); animation:shake 0.42s ease; }
+.login-error { font-size:11px; color:var(--red); text-align:center; min-height:16px; line-height:1.5; margin-top:6px; }
+.login-error .err-link { color:var(--red); text-decoration:underline; cursor:pointer; font-weight:500; }
+.login-error .err-link:hover { opacity:0.75; }
 
 /* ── Profile avatar button + dropdown ── */
 .profile-avatar-btn {
@@ -1895,6 +1903,23 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 })();
 
 /* ── Login ── */
+const DISPOSABLE_DOMAINS = new Set(['mailinator.com','guerrillamail.com','yopmail.com','throwam.com',
+  'throwaway.email','tempmail.com','sharklasers.com','dispostable.com','maildrop.cc',
+  'trashmail.com','getairmail.com','fakeinbox.com','spam4.me','temp-mail.org']);
+
+function isValidEmail(email) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return false;
+  const domain = email.split('@')[1].toLowerCase();
+  return !DISPOSABLE_DOMAINS.has(domain);
+}
+
+function shakeInput(el) {
+  el.classList.remove('error');
+  void el.offsetWidth; // reflow to restart animation
+  el.classList.add('error');
+  setTimeout(() => el.classList.remove('error'), 500);
+}
+
 function showLoginScreen() {
   return new Promise(resolve => {
     const overlay  = document.getElementById('loginOverlay');
@@ -1905,52 +1930,79 @@ function showLoginScreen() {
     const signFrm  = document.getElementById('signupForm');
     overlay.classList.remove('hidden');
 
-    // Tab switching
-    tabLogin.addEventListener('click', () => {
-      tabLogin.classList.add('active'); tabSig.classList.remove('active');
-      loginFrm.style.display=''; signFrm.style.display='none'; err.textContent='';
-      document.getElementById('loginEmail').focus();
-    });
-    tabSig.addEventListener('click', () => {
+    function switchToSignup() {
       tabSig.classList.add('active'); tabLogin.classList.remove('active');
       signFrm.style.display=''; loginFrm.style.display='none'; err.textContent='';
       document.getElementById('signupFirst').focus();
-    });
+    }
+    function switchToLogin() {
+      tabLogin.classList.add('active'); tabSig.classList.remove('active');
+      loginFrm.style.display=''; signFrm.style.display='none'; err.textContent='';
+      document.getElementById('loginEmail').focus();
+    }
+
+    tabLogin.addEventListener('click', switchToLogin);
+    tabSig.addEventListener('click', switchToSignup);
 
     async function finishLogin(email, firstName, lastName) {
       try { localStorage.setItem('ot_user_email', email); } catch(_) {}
       if (firstName) try { localStorage.setItem('ot_user_first', firstName); } catch(_) {}
-      if (lastName)  try { localStorage.setItem('ot_user_last', lastName); } catch(_) {}
+      if (lastName)  try { localStorage.setItem('ot_user_last',  lastName);  } catch(_) {}
       overlay.classList.add('hidden');
       resolve(email);
     }
 
-    // Log in
+    function showLoginError(inputEl, msg, showSignupLink) {
+      shakeInput(inputEl);
+      if (showSignupLink) {
+        err.innerHTML = msg + ' <span class="err-link" id="errSignupLink">Sign up</span>';
+        document.getElementById('errSignupLink').addEventListener('click', switchToSignup);
+      } else {
+        err.textContent = msg;
+      }
+    }
+
+    // ── Log in ──
     async function doLogin() {
-      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-      if (!email || !email.includes('@')) { err.textContent = 'Enter a valid email.'; return; }
-      const btn = document.getElementById('loginBtn');
+      const inp   = document.getElementById('loginEmail');
+      const email = inp.value.trim().toLowerCase();
+      const btn   = document.getElementById('loginBtn');
+
+      if (!isValidEmail(email)) { showLoginError(inp, 'Enter a valid email address.', false); return; }
       btn.disabled = true; btn.textContent = 'Logging in…'; err.textContent = '';
+
+      // Owner always gets through
+      if (email === OWNER_EMAIL) { await finishLogin(email, 'Adithya', ''); return; }
+
       try {
-        if (email === OWNER_EMAIL) { await finishLogin(email, 'Adithya', ''); return; }
         if (sb) {
           const { data } = await sb.from('user_profiles').select('email').eq('email', email).single();
-          if (!data) { err.textContent = 'No account found. Sign up instead.'; btn.disabled=false; btn.textContent='Log in'; return; }
+          if (!data) {
+            btn.disabled = false; btn.textContent = 'Log in';
+            showLoginError(inp, "No account found.", true);
+            return;
+          }
           await sb.from('user_profiles').update({ last_seen: new Date().toISOString() }).eq('email', email);
         }
         await finishLogin(email, '', '');
       } catch(_) { await finishLogin(email, '', ''); }
     }
 
-    // Sign up
+    // ── Sign up ──
     async function doSignup() {
-      const first = document.getElementById('signupFirst').value.trim();
-      const last  = document.getElementById('signupLast').value.trim();
-      const email = document.getElementById('signupEmail').value.trim().toLowerCase();
-      if (!first) { err.textContent = 'Enter your first name.'; return; }
-      if (!email || !email.includes('@')) { err.textContent = 'Enter a valid email.'; return; }
-      const btn = document.getElementById('signupBtn');
-      btn.disabled = true; btn.textContent = 'Creating…'; err.textContent = '';
+      const firstInp = document.getElementById('signupFirst');
+      const lastInp  = document.getElementById('signupLast');
+      const emailInp = document.getElementById('signupEmail');
+      const first = firstInp.value.trim();
+      const last  = lastInp.value.trim();
+      const email = emailInp.value.trim().toLowerCase();
+      const btn   = document.getElementById('signupBtn');
+
+      if (!first) { shakeInput(firstInp); err.textContent = 'Enter your first name.'; return; }
+      if (!last)  { shakeInput(lastInp);  err.textContent = 'Enter your last name.';  return; }
+      if (!isValidEmail(email)) { showLoginError(emailInp, 'Enter a valid email address.', false); return; }
+
+      btn.disabled = true; btn.textContent = 'Creating account…'; err.textContent = '';
       try {
         if (sb) {
           await sb.from('user_profiles').upsert(
@@ -1964,7 +2016,7 @@ function showLoginScreen() {
 
     document.getElementById('loginBtn').addEventListener('click', doLogin);
     document.getElementById('signupBtn').addEventListener('click', doSignup);
-    document.getElementById('loginEmail').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+    document.getElementById('loginEmail').addEventListener('keydown',  e => { if(e.key==='Enter') doLogin(); });
     document.getElementById('signupEmail').addEventListener('keydown', e => { if(e.key==='Enter') doSignup(); });
     setTimeout(() => document.getElementById('loginEmail').focus(), 100);
   });
