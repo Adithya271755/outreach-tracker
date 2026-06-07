@@ -1904,22 +1904,21 @@ function renderAnalytics() {
 
   chart.innerHTML = '';
 
-  const COL_HIT    = 'rgba(74,222,128,0.65)';
-  const COL_PROG   = 'rgba(251,191,36,0.65)';
-  const COL_MISS   = 'rgba(248,113,113,0.65)';
-  const COL_ZERO   = '#1e1e1e';
-  const COL_FUTURE = '#333';
+  const COL_HIT    = '#4e9e6a';   // medium forest green
+  const COL_PROG   = '#b08828';   // deep old-gold
+  const COL_MISS   = '#b05050';   // muted brick red
+  const COL_FUTURE = '#2e2e2e';
 
   // One flex:1 slot per day — mirrors the day-picker row exactly (gap:3px, flex:1 per cell)
   // dash = no activity (future days OR past days with 0 companies)
   // bar  = days with actual outreach logged
-  const BAR_W  = '8px';
+  const BAR_W  = '100%';
   const DASH_H = '3px';
 
   days.forEach(({ i, n, future }) => {
     const slot = document.createElement('div');
     slot.style.cssText =
-      `flex:1; min-width:0; display:flex; flex-direction:column;` +
+      `width:8px; flex-shrink:0; display:flex; flex-direction:column;` +
       `align-items:center; justify-content:flex-end; height:${MAX_H}px; position:relative; cursor:default;`;
 
     if (future || n === 0) {
