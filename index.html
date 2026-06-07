@@ -481,6 +481,53 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .draft-meta { font-size:12px; color:var(--m); margin-bottom:14px; line-height:1.6; }
 .draft-meta strong { color:var(--t); font-weight:500; }
 
+/* ── Analytics ── */
+.analytics-section {
+  margin-top:32px; padding-top:24px; border-top:1px solid var(--b);
+  display:none;
+}
+.analytics-section.open { display:block; }
+.analytics-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:20px;
+}
+.analytics-title {
+  font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:var(--m);
+}
+.analytics-range {
+  font-size:10px; color:#2a2a2a; letter-spacing:0.04em;
+}
+.analytics-chart {
+  display:flex; align-items:flex-end; gap:4px;
+  overflow-x:auto; padding-bottom:20px; padding-top:4px;
+  scrollbar-width:none; position:relative;
+}
+.analytics-chart::-webkit-scrollbar { display:none; }
+.analytics-candle {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:flex-end; flex-shrink:0; cursor:default;
+  position:relative; width:6px;
+}
+.analytics-wick {
+  width:1px; flex-shrink:0; border-radius:1px;
+}
+.analytics-body {
+  width:6px; flex-shrink:0; border-radius:2px 2px 1px 1px;
+  transition:opacity 0.12s;
+}
+.analytics-candle:hover .analytics-body { opacity:0.65; }
+.analytics-tooltip {
+  position:absolute; bottom:calc(100% + 8px); left:50%;
+  transform:translateX(-50%); background:#1a1a1a; border:1px solid #252525;
+  border-radius:6px; padding:5px 9px; font-size:10px; color:#888;
+  white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.12s;
+  z-index:10;
+}
+.analytics-candle:hover .analytics-tooltip { opacity:1; }
+.analytics-empty {
+  font-size:11px; color:#2a2a2a; padding:24px 0;
+}
+
 /* ── Login overlay ── */
 @property --border-angle {
   syntax: '<angle>'; initial-value: 0deg; inherits: false;
@@ -783,8 +830,19 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
     <button class="data-btn" id="importBtn">↑ Import</button>
     <span class="footer-sep">·</span>
     <button class="data-btn" id="shareBtn">↗ Share view</button>
+    <span class="footer-sep">·</span>
+    <button class="data-btn" id="analyticsBtn">↑ Analytics</button>
     <input type="file" id="importFile" accept=".json" style="display:none">
     <span class="last-saved" id="lastSaved"></span>
+  </div>
+
+  <!-- Analytics chart -->
+  <div class="analytics-section" id="analyticsSection">
+    <div class="analytics-header">
+      <span class="analytics-title">Outreach activity</span>
+      <span class="analytics-range" id="analyticsRange"></span>
+    </div>
+    <div class="analytics-chart" id="analyticsChart"></div>
   </div>
 </div>
 
@@ -1792,6 +1850,91 @@ document.getElementById('importFile').addEventListener('change',e=>{
     e.target.value='';
   };
   reader.readAsText(file);
+});
+
+/* ── Analytics ── */
+function renderAnalytics() {
+  const chart = document.getElementById('analyticsChart');
+  const range = document.getElementById('analyticsRange');
+  if (!chart) return;
+
+  const MAX_H   = 72;  // max bar height px
+  const WICK_PC = 0.18; // wick = 18% of body height
+  const ti = todayIdx();
+
+  // Gather all days from campaign start to today
+  const days = [];
+  for (let i = 0; i <= ti; i++) {
+    days.push({ i, n: companyCount(i) });
+  }
+
+  if (days.length === 0) {
+    chart.innerHTML = '<div class="analytics-empty">No data yet — start adding companies.</div>';
+    return;
+  }
+
+  const maxN = Math.max(1, ...days.map(d => d.n));
+  const startLbl = idxToDate(0).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  const endLbl   = idxToDate(ti).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  range.textContent = startLbl + ' – ' + endLbl;
+
+  chart.innerHTML = '';
+
+  days.forEach(({ i, n }) => {
+    const st    = statusOf(i, n);
+    const bodyH = n === 0 ? 2 : Math.max(5, Math.round((n / maxN) * MAX_H));
+    const wickH = n === 0 ? 0 : Math.max(3, Math.round(bodyH * WICK_PC));
+
+    const color = n === 0       ? '#191919' :
+      st.gc === 's-hit'         ? 'var(--green)' :
+      st.gc === 's-prog'        ? 'var(--amber)' :
+      st.gc === 's-miss'        ? 'var(--red)'   : '#191919';
+
+    const date  = idxToDate(i);
+    const label = date.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+
+    const candle = document.createElement('div');
+    candle.className = 'analytics-candle';
+    candle.style.height = (MAX_H + wickH + 2) + 'px';
+
+    // Tooltip
+    const tip = document.createElement('div');
+    tip.className = 'analytics-tooltip';
+    tip.textContent = label + ': ' + n + ' compan' + (n === 1 ? 'y' : 'ies');
+    candle.appendChild(tip);
+
+    // Wick (above body)
+    if (wickH > 0) {
+      const wick = document.createElement('div');
+      wick.className = 'analytics-wick';
+      wick.style.height = wickH + 'px';
+      wick.style.background = color;
+      wick.style.opacity = '0.35';
+      candle.appendChild(wick);
+    }
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'analytics-body';
+    body.style.height  = bodyH + 'px';
+    body.style.background = color;
+    candle.appendChild(body);
+
+    chart.appendChild(candle);
+  });
+
+  // Scroll to most recent (right)
+  requestAnimationFrame(() => { chart.scrollLeft = chart.scrollWidth; });
+}
+
+let analyticsOpen = false;
+document.getElementById('analyticsBtn').addEventListener('click', () => {
+  analyticsOpen = !analyticsOpen;
+  const section = document.getElementById('analyticsSection');
+  const btn     = document.getElementById('analyticsBtn');
+  section.classList.toggle('open', analyticsOpen);
+  btn.textContent = analyticsOpen ? '↓ Analytics' : '↑ Analytics';
+  if (analyticsOpen) renderAnalytics();
 });
 
 /* ── Search ── */
