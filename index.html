@@ -482,6 +482,11 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .draft-meta strong { color:var(--t); font-weight:500; }
 
 /* ── Login overlay ── */
+@property --border-angle {
+  syntax: '<angle>'; initial-value: 0deg; inherits: false;
+}
+@keyframes borderSpin { to { --border-angle: 360deg; } }
+
 .login-overlay {
   position:fixed; inset:0; background:#0a0a0a;
   display:flex; align-items:center; justify-content:center;
@@ -491,33 +496,92 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .login-card {
   width:340px; display:flex; flex-direction:column; align-items:center; gap:20px;
 }
+
+/* Animated square border frame */
+.login-frame {
+  width:100%; position:relative; border-radius:10px; padding:28px 28px 22px;
+  background:#0f0f0f;
+}
+.login-frame::before {
+  content:''; position:absolute; inset:0; border-radius:10px; padding:1px;
+  background: conic-gradient(from var(--border-angle), #111 0%, #444 30%, #111 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: borderSpin 3s linear infinite;
+  pointer-events: none;
+}
+
 .login-brand {
-  font-size:11px; letter-spacing:0.22em; text-transform:uppercase;
-  color:#383838; font-weight:500; margin-bottom:12px;
+  font-size:10px; letter-spacing:0.22em; text-transform:uppercase;
+  color:#303030; font-weight:500; text-align:center; margin-bottom:14px;
 }
-.login-title {
-  font-size:22px; font-weight:300; color:var(--t); letter-spacing:-0.02em; text-align:center;
+
+/* Login / Sign up tabs */
+.login-tabs {
+  display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid #1e1e1e; width:100%;
 }
-.login-sub {
-  font-size:12px; color:#404040; text-align:center; margin-top:-10px; line-height:1.6;
+.login-tab {
+  flex:1; background:none; border:none; color:#383838; font-size:12px;
+  font-family:inherit; padding:8px 0; cursor:pointer; letter-spacing:0.04em;
+  border-bottom:2px solid transparent; margin-bottom:-1px;
+  transition:color 0.15s, border-color 0.15s;
 }
+.login-tab.active { color:var(--t); border-bottom-color:var(--t); }
+.login-tab:hover:not(.active) { color:#666; }
+
 .login-input {
-  width:100%; background:var(--s1); border:1px solid var(--b);
-  color:var(--t); font-size:13px; padding:12px 16px;
-  border-radius:9px; outline:none; font-family:inherit;
-  transition:border-color 0.15s; text-align:center;
+  width:100%; background:#141414; border:1px solid #1e1e1e;
+  color:var(--t); font-size:13px; padding:11px 14px;
+  border-radius:8px; outline:none; font-family:inherit;
+  transition:border-color 0.15s; margin-bottom:8px;
 }
-.login-input::placeholder { color:#333; }
-.login-input:focus { border-color:#3a3a3a; }
+.login-input::placeholder { color:#2a2a2a; }
+.login-input:focus { border-color:#333; }
+.login-input-row { display:flex; gap:8px; width:100%; }
+.login-input-row .login-input { margin-bottom:0; }
+
 .login-btn {
   width:100%; background:var(--t); border:none; color:#0a0a0a;
   font-size:13px; font-weight:600; padding:12px;
-  border-radius:9px; cursor:pointer; font-family:inherit;
+  border-radius:8px; cursor:pointer; font-family:inherit; margin-top:4px;
   transition:background 0.12s, opacity 0.12s;
 }
 .login-btn:hover { background:#fff; }
 .login-btn:disabled { opacity:0.4; cursor:default; }
 .login-error { font-size:11px; color:var(--red); text-align:center; min-height:16px; }
+.login-switch { font-size:11px; color:#333; text-align:center; margin-top:4px; }
+.login-switch span { color:#555; cursor:pointer; text-decoration:underline; }
+.login-switch span:hover { color:#888; }
+
+/* ── Profile avatar button + dropdown ── */
+.profile-avatar-btn {
+  width:30px; height:30px; border-radius:50%;
+  background:#1a1a1a; border:1px solid #222;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:500; color:#555;
+  cursor:pointer; flex-shrink:0; letter-spacing:0.02em;
+  transition:border-color 0.15s, color 0.15s;
+  position:relative;
+}
+.profile-avatar-btn:hover { border-color:#3a3a3a; color:#888; }
+
+.profile-dropdown {
+  position:absolute; top:calc(100% + 8px); right:0;
+  background:#141414; border:1px solid #222; border-radius:10px;
+  padding:14px 16px; min-width:190px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6);
+  opacity:0; pointer-events:none; transform:translateY(-4px);
+  transition:opacity 0.15s, transform 0.15s; z-index:600;
+}
+.profile-dropdown.open { opacity:1; pointer-events:all; transform:translateY(0); }
+.profile-drop-name { font-size:13px; font-weight:500; color:var(--t); margin-bottom:2px; }
+.profile-drop-email { font-size:10px; color:#383838; word-break:break-all; margin-bottom:12px; }
+.profile-drop-divider { height:1px; background:#1e1e1e; margin-bottom:10px; }
+.profile-drop-item {
+  font-size:11px; color:#383838; cursor:pointer; padding:4px 0;
+  letter-spacing:0.04em; transition:color 0.12s;
+}
+.profile-drop-item:hover { color:#888; }
 
 /* ── Portal button (topbar) ── */
 .portal-btn {
@@ -590,14 +654,35 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 <!-- Login overlay -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-card">
-    <div class="login-brand">Outreach Tracker</div>
-    <div class="login-title">Welcome back.</div>
-    <div class="login-sub">Enter your email to access your dashboard</div>
-    <input type="email" id="loginEmail" class="login-input" placeholder="your@email.com" autocomplete="email">
-    <button id="loginBtn" class="login-btn">Enter →</button>
-    <div id="loginError" class="login-error"></div>
+    <div class="login-frame">
+      <div class="login-brand">Outreach Tracker</div>
+      <div class="login-tabs">
+        <button class="login-tab active" id="tabLogin">Log in</button>
+        <button class="login-tab" id="tabSignup">Sign up</button>
+      </div>
+
+      <!-- Login form -->
+      <div id="loginForm">
+        <input type="email" id="loginEmail" class="login-input" placeholder="Email address" autocomplete="email">
+        <button id="loginBtn" class="login-btn">Log in</button>
+      </div>
+
+      <!-- Sign up form -->
+      <div id="signupForm" style="display:none">
+        <div class="login-input-row">
+          <input type="text" id="signupFirst" class="login-input" placeholder="First name" autocomplete="given-name">
+          <input type="text" id="signupLast" class="login-input" placeholder="Last name" autocomplete="family-name">
+        </div>
+        <input type="email" id="signupEmail" class="login-input" placeholder="Email address" autocomplete="email" style="margin-top:8px">
+        <button id="signupBtn" class="login-btn">Create account</button>
+      </div>
+
+      <div id="loginError" class="login-error"></div>
+    </div>
   </div>
 </div>
+
+<!-- Profile avatar button (injected into topbar by JS) -->
 
 <!-- Portal viewing bar (shown when owner is viewing another user) -->
 <div class="portal-viewing-bar" id="portalViewingBar">
@@ -624,6 +709,7 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 <div class="topbar">
   <div class="brand">Outreach</div>
   <button class="portal-btn" id="portalBtn" style="display:none">Portal</button>
+  <!-- profile avatar appended here by initSidebar() -->
   <div class="search-wrap">
     <span class="search-icon">⌕</span>
     <input id="searchInp" class="search-inp" type="text" placeholder="Search contacts or companies…" autocomplete="off">
@@ -1811,16 +1897,60 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 /* ── Login ── */
 function showLoginScreen() {
   return new Promise(resolve => {
-    const overlay = document.getElementById('loginOverlay');
-    const input   = document.getElementById('loginEmail');
-    const btn     = document.getElementById('loginBtn');
-    const err     = document.getElementById('loginError');
+    const overlay  = document.getElementById('loginOverlay');
+    const err      = document.getElementById('loginError');
+    const tabLogin = document.getElementById('tabLogin');
+    const tabSig   = document.getElementById('tabSignup');
+    const loginFrm = document.getElementById('loginForm');
+    const signFrm  = document.getElementById('signupForm');
     overlay.classList.remove('hidden');
 
+    // Tab switching
+    tabLogin.addEventListener('click', () => {
+      tabLogin.classList.add('active'); tabSig.classList.remove('active');
+      loginFrm.style.display=''; signFrm.style.display='none'; err.textContent='';
+      document.getElementById('loginEmail').focus();
+    });
+    tabSig.addEventListener('click', () => {
+      tabSig.classList.add('active'); tabLogin.classList.remove('active');
+      signFrm.style.display=''; loginFrm.style.display='none'; err.textContent='';
+      document.getElementById('signupFirst').focus();
+    });
+
+    async function finishLogin(email, firstName, lastName) {
+      try { localStorage.setItem('ot_user_email', email); } catch(_) {}
+      if (firstName) try { localStorage.setItem('ot_user_first', firstName); } catch(_) {}
+      if (lastName)  try { localStorage.setItem('ot_user_last', lastName); } catch(_) {}
+      overlay.classList.add('hidden');
+      resolve(email);
+    }
+
+    // Log in
     async function doLogin() {
-      const email = input.value.trim().toLowerCase();
-      if (!email || !email.includes('@')) { err.textContent = 'Please enter a valid email.'; return; }
-      btn.disabled = true; btn.textContent = 'Entering…'; err.textContent = '';
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      if (!email || !email.includes('@')) { err.textContent = 'Enter a valid email.'; return; }
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true; btn.textContent = 'Logging in…'; err.textContent = '';
+      try {
+        if (email === OWNER_EMAIL) { await finishLogin(email, 'Adithya', ''); return; }
+        if (sb) {
+          const { data } = await sb.from('user_profiles').select('email').eq('email', email).single();
+          if (!data) { err.textContent = 'No account found. Sign up instead.'; btn.disabled=false; btn.textContent='Log in'; return; }
+          await sb.from('user_profiles').update({ last_seen: new Date().toISOString() }).eq('email', email);
+        }
+        await finishLogin(email, '', '');
+      } catch(_) { await finishLogin(email, '', ''); }
+    }
+
+    // Sign up
+    async function doSignup() {
+      const first = document.getElementById('signupFirst').value.trim();
+      const last  = document.getElementById('signupLast').value.trim();
+      const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+      if (!first) { err.textContent = 'Enter your first name.'; return; }
+      if (!email || !email.includes('@')) { err.textContent = 'Enter a valid email.'; return; }
+      const btn = document.getElementById('signupBtn');
+      btn.disabled = true; btn.textContent = 'Creating…'; err.textContent = '';
       try {
         if (sb) {
           await sb.from('user_profiles').upsert(
@@ -1828,15 +1958,60 @@ function showLoginScreen() {
             { onConflict: 'email' }
           );
         }
-      } catch(_) {}
-      try { localStorage.setItem('ot_user_email', email); } catch(_) {}
-      overlay.classList.add('hidden');
-      resolve(email);
+        await finishLogin(email, first, last);
+      } catch(_) { await finishLogin(email, first, last); }
     }
 
-    btn.addEventListener('click', doLogin);
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-    setTimeout(() => input.focus(), 100);
+    document.getElementById('loginBtn').addEventListener('click', doLogin);
+    document.getElementById('signupBtn').addEventListener('click', doSignup);
+    document.getElementById('loginEmail').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+    document.getElementById('signupEmail').addEventListener('keydown', e => { if(e.key==='Enter') doSignup(); });
+    setTimeout(() => document.getElementById('loginEmail').focus(), 100);
+  });
+}
+
+/* ── Profile avatar ── */
+function initSidebar(email) {
+  const first    = localStorage.getItem('ot_user_first') || '';
+  const last     = localStorage.getItem('ot_user_last')  || '';
+  const name     = [first, last].filter(Boolean).join(' ') || email.split('@')[0];
+  const initials = ((first[0]||'') + (last[0]||'')).toUpperCase() || email[0].toUpperCase();
+
+  // Build avatar button + dropdown and append to topbar
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;margin-left:auto;flex-shrink:0;';
+
+  const btn = document.createElement('div');
+  btn.className = 'profile-avatar-btn';
+  btn.id = 'profileAvatarBtn';
+  btn.textContent = initials;
+
+  const drop = document.createElement('div');
+  drop.className = 'profile-dropdown';
+  drop.innerHTML = `
+    <div class="profile-drop-name">${esc(name)}</div>
+    <div class="profile-drop-email">${esc(email)}</div>
+    <div class="profile-drop-divider"></div>
+    <div class="profile-drop-item" id="profileLogout">Log out</div>`;
+
+  wrap.appendChild(btn);
+  wrap.appendChild(drop);
+  document.querySelector('.topbar').appendChild(wrap);
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    drop.classList.toggle('open');
+  });
+  document.addEventListener('click', () => drop.classList.remove('open'));
+
+  document.getElementById('profileLogout').addEventListener('click', () => {
+    if (!confirm('Log out?')) return;
+    try {
+      localStorage.removeItem('ot_user_email');
+      localStorage.removeItem('ot_user_first');
+      localStorage.removeItem('ot_user_last');
+    } catch(_) {}
+    location.reload();
   });
 }
 
@@ -1943,6 +2118,9 @@ function exitPortalView() {
 
   // Load this user's data
   loadLocalData(currentUserEmail);
+
+  // Init sidebar
+  initSidebar(currentUserEmail);
 
   // Show portal button for owner
   if (isOwner) document.getElementById('portalBtn').style.display = '';
