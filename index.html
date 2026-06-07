@@ -1904,11 +1904,11 @@ function renderAnalytics() {
 
   chart.innerHTML = '';
 
-  const COL_HIT    = 'var(--green)';
-  const COL_PROG   = 'var(--amber)';
-  const COL_MISS   = 'var(--red)';
+  const COL_HIT    = 'rgba(74,222,128,0.65)';
+  const COL_PROG   = 'rgba(251,191,36,0.65)';
+  const COL_MISS   = 'rgba(248,113,113,0.65)';
   const COL_ZERO   = '#1e1e1e';
-  const COL_FUTURE = '#2c2c2c';
+  const COL_FUTURE = '#333';
 
   // One flex:1 slot per day — mirrors the day-picker row exactly (gap:3px, flex:1 per cell)
   days.forEach(({ i, n, future }) => {
@@ -1919,7 +1919,7 @@ function renderAnalytics() {
 
     if (future) {
       const dash = document.createElement('div');
-      dash.style.cssText = `width:6px; height:2px; background:${COL_FUTURE}; border-radius:2px 2px 1px 1px; flex-shrink:0;`;
+      dash.style.cssText = `width:calc(100% - 2px); height:3px; background:${COL_FUTURE}; border-radius:2px; flex-shrink:0;`;
       slot.appendChild(dash);
     } else {
       const date  = idxToDate(i);
@@ -1939,7 +1939,7 @@ function renderAnalytics() {
 
       const body = document.createElement('div');
       body.style.cssText =
-        `width:6px; height:${bodyH}px; background:${color};` +
+        `width:calc(100% - 2px); height:${bodyH}px; background:${color};` +
         `border-radius:2px 2px 1px 1px; flex-shrink:0; transition:opacity 0.12s;`;
       slot.appendChild(body);
       slot.addEventListener('mouseenter', () => body.style.opacity = '0.65');
