@@ -734,6 +734,12 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .portal-user-email { font-size:12px; color:#888; flex:1; }
 .portal-user-meta { font-size:10px; color:#383838; }
 .portal-user-arrow { font-size:14px; color:#2a2a2a; }
+.portal-delete-btn {
+  background:none; border:none; color:#2e2e2e; font-size:16px; cursor:pointer;
+  padding:4px 6px; border-radius:4px; line-height:1; flex-shrink:0;
+  transition:color 0.15s, background 0.15s; font-family:inherit;
+}
+.portal-delete-btn:hover { color:var(--red); background:rgba(248,113,113,0.08); }
 .portal-viewing-bar {
   display:none; position:fixed; top:0; left:0; right:0;
   padding:10px 20px; background:rgba(74,222,128,0.07);
@@ -2389,15 +2395,31 @@ function openPortal() {
     others.forEach(u => {
       const row = document.createElement('div'); row.className = 'portal-user-row';
       const initial = u.email[0].toUpperCase();
-      const lastSeen = new Date(u.last_seen).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      const lastSeen = u.last_seen
+        ? new Date(u.last_seen).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        : 'Never';
       row.innerHTML = `
         <div class="portal-user-avatar">${initial}</div>
-        <div style="flex:1">
+        <div style="flex:1; min-width:0;">
           <div class="portal-user-email">${esc(u.email)}</div>
           <div class="portal-user-meta">Last seen ${lastSeen}</div>
         </div>
-        <div class="portal-user-arrow">›</div>`;
-      row.addEventListener('click', () => viewUserTracker(u.email));
+        <div class="portal-user-arrow">›</div>
+        <button class="portal-delete-btn" title="Delete account">×</button>`;
+
+      // Click row → view tracker (but not when delete btn clicked)
+      row.addEventListener('click', (e) => {
+        if (e.target.classList.contains('portal-delete-btn')) return;
+        viewUserTracker(u.email);
+      });
+
+      // Delete button
+      const delBtn = row.querySelector('.portal-delete-btn');
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deletePortalUser(u.email, row);
+      });
+
       body.appendChild(row);
     });
   });
@@ -2405,6 +2427,37 @@ function openPortal() {
 
 function closePortal() {
   document.getElementById('portalOverlay').classList.remove('open');
+}
+
+async function deletePortalUser(email, rowEl) {
+  if (!confirm(`Delete account "${email}"?\n\nThis removes their login and all tracker data from the server. This cannot be undone.`)) return;
+
+  // Dim the row while deleting
+  rowEl.style.opacity = '0.4';
+  rowEl.style.pointerEvents = 'none';
+
+  try {
+    if (!sb) throw new Error('No Supabase connection');
+    const [r1, r2] = await Promise.all([
+      sb.from('user_profiles').delete().eq('email', email),
+      sb.from('user_data').delete().eq('email', email),
+    ]);
+    if (r1.error) throw r1.error;
+    // Animate row out
+    rowEl.style.transition = 'opacity 0.25s, max-height 0.3s, padding 0.3s';
+    rowEl.style.maxHeight = rowEl.offsetHeight + 'px';
+    requestAnimationFrame(() => {
+      rowEl.style.opacity = '0';
+      rowEl.style.maxHeight = '0';
+      rowEl.style.padding = '0';
+      rowEl.style.borderBottom = 'none';
+    });
+    setTimeout(() => rowEl.remove(), 350);
+  } catch(e) {
+    rowEl.style.opacity = '1';
+    rowEl.style.pointerEvents = '';
+    alert('Delete failed: ' + (e.message || e));
+  }
 }
 
 async function viewUserTracker(email) {
