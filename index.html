@@ -480,14 +480,150 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .share-note { margin-top:12px; font-size:11px; color:var(--m); line-height:1.5; }
 .draft-meta { font-size:12px; color:var(--m); margin-bottom:14px; line-height:1.6; }
 .draft-meta strong { color:var(--t); font-weight:500; }
+
+/* ── Login overlay ── */
+.login-overlay {
+  position:fixed; inset:0; background:#0a0a0a;
+  display:flex; align-items:center; justify-content:center;
+  z-index:2000; transition:opacity 0.3s;
+}
+.login-overlay.hidden { opacity:0; pointer-events:none; }
+.login-card {
+  width:340px; display:flex; flex-direction:column; align-items:center; gap:20px;
+}
+.login-brand {
+  font-size:11px; letter-spacing:0.22em; text-transform:uppercase;
+  color:#383838; font-weight:500; margin-bottom:12px;
+}
+.login-title {
+  font-size:22px; font-weight:300; color:var(--t); letter-spacing:-0.02em; text-align:center;
+}
+.login-sub {
+  font-size:12px; color:#404040; text-align:center; margin-top:-10px; line-height:1.6;
+}
+.login-input {
+  width:100%; background:var(--s1); border:1px solid var(--b);
+  color:var(--t); font-size:13px; padding:12px 16px;
+  border-radius:9px; outline:none; font-family:inherit;
+  transition:border-color 0.15s; text-align:center;
+}
+.login-input::placeholder { color:#333; }
+.login-input:focus { border-color:#3a3a3a; }
+.login-btn {
+  width:100%; background:var(--t); border:none; color:#0a0a0a;
+  font-size:13px; font-weight:600; padding:12px;
+  border-radius:9px; cursor:pointer; font-family:inherit;
+  transition:background 0.12s, opacity 0.12s;
+}
+.login-btn:hover { background:#fff; }
+.login-btn:disabled { opacity:0.4; cursor:default; }
+.login-error { font-size:11px; color:var(--red); text-align:center; min-height:16px; }
+
+/* ── Portal button (topbar) ── */
+.portal-btn {
+  background:none; border:1px solid #252525; color:#454545;
+  font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
+  padding:5px 12px; border-radius:6px; cursor:pointer;
+  font-family:inherit; flex-shrink:0; transition:border-color 0.12s,color 0.12s;
+}
+.portal-btn:hover { border-color:#3a3a3a; color:#888; }
+
+/* ── Portal overlay ── */
+.portal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.6);
+  display:flex; align-items:flex-start; justify-content:flex-start;
+  z-index:1500; opacity:0; pointer-events:none; transition:opacity 0.2s;
+}
+.portal-overlay.open { opacity:1; pointer-events:all; }
+.portal-panel {
+  width:420px; height:100%; background:#111; border-right:1px solid var(--b);
+  display:flex; flex-direction:column;
+  transform:translateX(-100%); transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.portal-overlay.open .portal-panel { transform:translateX(0); }
+.portal-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:20px 22px 16px; border-bottom:1px solid var(--b); flex-shrink:0;
+}
+.portal-hdr-title { font-size:13px; font-weight:500; color:var(--t); letter-spacing:0.02em; }
+.portal-hdr-sub { font-size:11px; color:#404040; margin-top:2px; }
+.portal-close {
+  background:none; border:none; color:#404040; font-size:20px;
+  cursor:pointer; line-height:1; padding:4px; transition:color 0.12s;
+}
+.portal-close:hover { color:var(--t); }
+.portal-body { flex:1; overflow-y:auto; padding:12px 0; }
+.portal-empty { padding:40px 22px; text-align:center; font-size:12px; color:#333; }
+.portal-user-row {
+  display:flex; align-items:center; gap:14px;
+  padding:12px 22px; cursor:pointer; transition:background 0.1s;
+  border-bottom:1px solid #161616;
+}
+.portal-user-row:hover { background:#161616; }
+.portal-user-avatar {
+  width:32px; height:32px; border-radius:50%; background:var(--s2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; color:#555; flex-shrink:0; font-weight:500;
+}
+.portal-user-email { font-size:12px; color:#888; flex:1; }
+.portal-user-meta { font-size:10px; color:#383838; }
+.portal-user-arrow { font-size:14px; color:#2a2a2a; }
+.portal-viewing-bar {
+  display:none; position:fixed; top:0; left:0; right:0;
+  padding:10px 20px; background:rgba(74,222,128,0.07);
+  border-bottom:1px solid rgba(74,222,128,0.15);
+  font-size:11px; color:var(--green); text-align:center;
+  letter-spacing:0.04em; z-index:998;
+  display:none; align-items:center; justify-content:center; gap:16px;
+}
+.portal-viewing-bar.visible { display:flex; }
+.portal-exit-btn {
+  background:none; border:1px solid rgba(74,222,128,0.3); color:var(--green);
+  font-size:10px; padding:3px 10px; border-radius:5px; cursor:pointer;
+  font-family:inherit; letter-spacing:0.05em;
+}
+.portal-exit-btn:hover { background:rgba(74,222,128,0.1); }
 </style>
 </head>
 <body>
+
+<!-- Login overlay -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-brand">Outreach Tracker</div>
+    <div class="login-title">Welcome back.</div>
+    <div class="login-sub">Enter your email to access your dashboard</div>
+    <input type="email" id="loginEmail" class="login-input" placeholder="your@email.com" autocomplete="email">
+    <button id="loginBtn" class="login-btn">Enter →</button>
+    <div id="loginError" class="login-error"></div>
+  </div>
+</div>
+
+<!-- Portal viewing bar (shown when owner is viewing another user) -->
+<div class="portal-viewing-bar" id="portalViewingBar">
+  <span id="portalViewingLabel">Viewing —</span>
+  <button class="portal-exit-btn" id="portalExitBtn">← Back to my tracker</button>
+</div>
+
+<!-- Portal overlay -->
+<div class="portal-overlay" id="portalOverlay">
+  <div class="portal-panel">
+    <div class="portal-hdr">
+      <div>
+        <div class="portal-hdr-title">Portal</div>
+        <div class="portal-hdr-sub">Users who have logged in</div>
+      </div>
+      <button class="portal-close" id="portalClose">×</button>
+    </div>
+    <div class="portal-body" id="portalBody"></div>
+  </div>
+</div>
 
 <div class="ro-banner" id="roBanner">👁 Shared view — read only</div>
 
 <div class="topbar">
   <div class="brand">Outreach</div>
+  <button class="portal-btn" id="portalBtn" style="display:none">Portal</button>
   <div class="search-wrap">
     <span class="search-icon">⌕</span>
     <input id="searchInp" class="search-inp" type="text" placeholder="Search contacts or companies…" autocomplete="off">
@@ -642,6 +778,18 @@ try {
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 } catch(e) { console.warn('Supabase unavailable:', e); }
 
+/* ── Owner config ── */
+const OWNER_EMAIL = 'adithya@moderninbound.com';
+let currentUserEmail = null;
+let isOwner = false;
+let isPortalViewing = false; // true when owner is viewing another user's data
+
+function emailStorageKey(email) {
+  // Owner keeps original key for backward-compat with existing data
+  if (!email || email === OWNER_EMAIL) return 'ot_v4';
+  return 'ot_v4_u_' + email.replace(/[^a-zA-Z0-9]/g, '_');
+}
+
 /* ── Constants ── */
 const CAMPAIGN_START = new Date('2026-06-01T00:00:00');
 const JAN1_IDX = Math.round((new Date('2026-01-01T00:00:00') - CAMPAIGN_START) / 86400000);
@@ -650,28 +798,34 @@ let cur = 0, viewMode = 'row', isReadOnly = false;
 
 /* ── Data ── */
 let D = { t:50, d:{} };
-(function(){
+function loadLocalData(email) {
   try {
-    const raw = localStorage.getItem('ot_v4') || localStorage.getItem('ot_v4_bak') || sessionStorage.getItem('ot_v4_sess');
+    const key = emailStorageKey(email);
+    const raw = localStorage.getItem(key) || localStorage.getItem(key+'_bak') || sessionStorage.getItem(key+'_sess');
     if (raw) { const p = JSON.parse(raw); if (p && typeof p.t==='number' && p.d) D = p; }
   } catch(_){}
-})();
+}
 
 function persist() {
-  if (isReadOnly) return;
+  if (isReadOnly || isPortalViewing) return;
+  const key = emailStorageKey(currentUserEmail);
   const s = JSON.stringify(D), ts = new Date().toISOString();
   let ok = false;
-  try { localStorage.setItem('ot_v4', s); ok = true; } catch(_){}
-  try { localStorage.setItem('ot_v4_bak', s); } catch(_){}
-  try { localStorage.setItem('ot_v4_ts', ts); } catch(_){}
-  try { sessionStorage.setItem('ot_v4_sess', s); } catch(_){}
+  try { localStorage.setItem(key, s); ok = true; } catch(_){}
+  try { localStorage.setItem(key+'_bak', s); } catch(_){}
+  try { localStorage.setItem(key+'_ts', ts); } catch(_){}
+  try { sessionStorage.setItem(key+'_sess', s); } catch(_){}
   if (ok) { showSaved(ts); }
   else {
     const el = document.getElementById('lastSaved');
     if (el) { el.textContent = '⚠ Storage full — export JSON backup!'; el.style.color = 'var(--red)'; }
   }
-  // Background Supabase sync — owner with an active session
+  // Background Supabase sync — share session
   if (sb && sessionId && ownerToken) { syncToSupabase().catch(()=>{}); }
+  // Background sync to user_data table
+  if (sb && currentUserEmail) {
+    sb.from('user_data').upsert({ email: currentUserEmail, data: D, updated_at: ts }, { onConflict: 'email' }).then(()=>{});
+  }
 }
 function showSaved(ts) {
   const el = document.getElementById('lastSaved'); if(!el||!ts) return;
@@ -699,12 +853,13 @@ function curDate() { return idxToDate(cur); }
 /* ── Status ── */
 function statusOf(i,n) {
   const t=D.t,ti=todayIdx(),past=i<ti;
-  if(n===0&&!past)     return {lbl:'—',        bc:'b-empty',fc:'c-prog',gc:''};
-  if(n===0&&past&&i<0) return {lbl:'—',        bc:'b-empty',fc:'c-prog',gc:'s-pre'};
-  if(n===0&&past)      return {lbl:'Missed',    bc:'b-miss', fc:'c-miss',gc:'s-miss'};
-  if(n>=t)             return {lbl:'Complete',  bc:'b-hit',  fc:'c-hit', gc:'s-hit'};
-  if(past)             return {lbl:'Missed',    bc:'b-miss', fc:'c-miss',gc:'s-miss'};
-  return                      {lbl:'In Progress',bc:'b-prog',fc:'c-prog',gc:'s-prog'};
+  if(n===0&&!past)     return {lbl:'—',           bc:'b-empty',fc:'c-prog',gc:''};
+  if(n===0&&past&&i<0) return {lbl:'—',           bc:'b-empty',fc:'c-prog',gc:'s-pre'};
+  if(n===0&&past)      return {lbl:'Missed',       bc:'b-miss', fc:'c-miss',gc:'s-miss'};
+  if(n>=t)             return {lbl:'Complete',     bc:'b-hit',  fc:'c-hit', gc:'s-hit'};
+  if(past&&n>0)        return {lbl:'In Progress',  bc:'b-prog', fc:'c-prog',gc:'s-prog'};
+  if(past)             return {lbl:'Missed',       bc:'b-miss', fc:'c-miss',gc:'s-miss'};
+  return                      {lbl:'In Progress',  bc:'b-prog', fc:'c-prog',gc:'s-prog'};
 }
 
 /* ── Navigation ── */
@@ -1653,6 +1808,120 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
   });
 })();
 
+/* ── Login ── */
+function showLoginScreen() {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('loginOverlay');
+    const input   = document.getElementById('loginEmail');
+    const btn     = document.getElementById('loginBtn');
+    const err     = document.getElementById('loginError');
+    overlay.classList.remove('hidden');
+
+    async function doLogin() {
+      const email = input.value.trim().toLowerCase();
+      if (!email || !email.includes('@')) { err.textContent = 'Please enter a valid email.'; return; }
+      btn.disabled = true; btn.textContent = 'Entering…'; err.textContent = '';
+      try {
+        if (sb) {
+          await sb.from('user_profiles').upsert(
+            { email, last_seen: new Date().toISOString() },
+            { onConflict: 'email' }
+          );
+        }
+      } catch(_) {}
+      try { localStorage.setItem('ot_user_email', email); } catch(_) {}
+      overlay.classList.add('hidden');
+      resolve(email);
+    }
+
+    btn.addEventListener('click', doLogin);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    setTimeout(() => input.focus(), 100);
+  });
+}
+
+/* ── Portal ── */
+document.getElementById('portalBtn').addEventListener('click', () => openPortal());
+document.getElementById('portalClose').addEventListener('click', () => closePortal());
+document.getElementById('portalOverlay').addEventListener('click', e => {
+  if (e.target.id === 'portalOverlay') closePortal();
+});
+document.getElementById('portalExitBtn').addEventListener('click', () => exitPortalView());
+
+function openPortal() {
+  const overlay = document.getElementById('portalOverlay');
+  const body    = document.getElementById('portalBody');
+  overlay.classList.add('open');
+  body.innerHTML = '<div class="portal-empty">Loading…</div>';
+
+  if (!sb) { body.innerHTML = '<div class="portal-empty">Supabase not connected.</div>'; return; }
+
+  sb.from('user_profiles').select('*').order('last_seen', { ascending: false }).then(({ data, error }) => {
+    if (error || !data) { body.innerHTML = '<div class="portal-empty">Could not load users.</div>'; return; }
+    const others = data.filter(u => u.email !== OWNER_EMAIL);
+    if (others.length === 0) { body.innerHTML = '<div class="portal-empty">No other users have logged in yet.</div>'; return; }
+    body.innerHTML = '';
+    others.forEach(u => {
+      const row = document.createElement('div'); row.className = 'portal-user-row';
+      const initial = u.email[0].toUpperCase();
+      const lastSeen = new Date(u.last_seen).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      row.innerHTML = `
+        <div class="portal-user-avatar">${initial}</div>
+        <div style="flex:1">
+          <div class="portal-user-email">${esc(u.email)}</div>
+          <div class="portal-user-meta">Last seen ${lastSeen}</div>
+        </div>
+        <div class="portal-user-arrow">›</div>`;
+      row.addEventListener('click', () => viewUserTracker(u.email));
+      body.appendChild(row);
+    });
+  });
+}
+
+function closePortal() {
+  document.getElementById('portalOverlay').classList.remove('open');
+}
+
+async function viewUserTracker(email) {
+  closePortal();
+  try {
+    let userData = null;
+    if (sb) {
+      const { data } = await sb.from('user_data').select('data').eq('email', email).single();
+      if (data && data.data) userData = data.data;
+    }
+    if (!userData) {
+      alert('No tracker data found for ' + email + ' yet.');
+      return;
+    }
+    // Save current owner data, switch to viewer's data
+    D = userData;
+    isPortalViewing = true;
+    isReadOnly = true;
+    const bar = document.getElementById('portalViewingBar');
+    document.getElementById('portalViewingLabel').textContent = '👁 Viewing ' + email;
+    bar.classList.add('visible');
+    cur = todayIdx(); render();
+    requestAnimationFrame(() => {
+      const h = bar.offsetHeight;
+      document.documentElement.style.setProperty('--banner-h', h + 'px');
+      document.body.style.paddingTop = h + 'px';
+    });
+  } catch(e) { alert('Could not load user data.'); }
+}
+
+function exitPortalView() {
+  isPortalViewing = false;
+  isReadOnly = false;
+  D = { t:50, d:{} };
+  loadLocalData(currentUserEmail);
+  const bar = document.getElementById('portalViewingBar');
+  bar.classList.remove('visible');
+  document.documentElement.style.setProperty('--banner-h', '0px');
+  document.body.style.paddingTop = '';
+  cur = todayIdx(); render();
+}
+
 /* ── Init ── */
 (async () => {
   // Restore Supabase session identity if owner has one
@@ -1663,9 +1932,27 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
     if (storedToken) ownerToken = storedToken;
   } catch(_) {}
 
+  // Login gate
+  try { currentUserEmail = localStorage.getItem('ot_user_email'); } catch(_) {}
+  if (!currentUserEmail) {
+    currentUserEmail = await showLoginScreen();
+  } else {
+    document.getElementById('loginOverlay').classList.add('hidden');
+  }
+  isOwner = (currentUserEmail === OWNER_EMAIL);
+
+  // Load this user's data
+  loadLocalData(currentUserEmail);
+
+  // Show portal button for owner
+  if (isOwner) document.getElementById('portalBtn').style.display = '';
+
   await checkShareMode();
   document.getElementById('tInp').value = D.t;
-  if (!isReadOnly) { const ts = localStorage.getItem('ot_v4_ts'); if (ts) showSaved(ts); }
+  if (!isReadOnly) {
+    const ts = localStorage.getItem(emailStorageKey(currentUserEmail) + '_ts');
+    if (ts) showSaved(ts);
+  }
   cur = todayIdx();
   render();
 })();
