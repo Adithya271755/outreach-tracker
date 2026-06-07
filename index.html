@@ -502,6 +502,36 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
   padding-bottom:20px; padding-top:4px;
   position:relative;
 }
+/* ── Analytics customize ── */
+.ac-footer {
+  display:flex; align-items:center; margin-top:14px;
+}
+.ac-customize-btn {
+  background:none; border:none; color:#444; font-size:9px;
+  letter-spacing:0.12em; text-transform:uppercase; cursor:pointer;
+  font-family:inherit; padding:0; transition:color 0.15s;
+}
+.ac-customize-btn:hover { color:var(--m); }
+.ac-palette {
+  margin-top:16px; padding-top:16px; border-top:1px solid var(--b);
+  display:grid; grid-template-columns:repeat(3,1fr); gap:7px;
+}
+.ac-palette.hidden { display:none; }
+.pal-opt {
+  display:flex; align-items:center; gap:8px; padding:7px 9px;
+  background:var(--s1); border:1px solid var(--b); border-radius:6px;
+  cursor:pointer; transition:border-color 0.15s;
+}
+.pal-opt:hover { border-color:var(--b2); }
+.pal-opt.sel { border-color:#555; }
+.pal-swatches { display:flex; gap:3px; flex-shrink:0; }
+.pal-swatch { width:10px; height:18px; border-radius:2px; flex-shrink:0; }
+.pal-label {
+  font-size:9px; color:var(--m); letter-spacing:0.03em;
+  line-height:1.3; min-width:0; overflow:hidden;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+}
+/* ── Analytics loading ── */
 .analytics-loading {
   display:flex; align-items:center; justify-content:center;
   height:52px; gap:7px; flex:1;
@@ -856,6 +886,10 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
       <span class="analytics-range" id="analyticsRange"></span>
     </div>
     <div class="analytics-chart" id="analyticsChart"></div>
+    <div class="ac-footer">
+      <button class="ac-customize-btn" id="customizeBtn">Customize</button>
+    </div>
+    <div class="ac-palette hidden" id="acPalette"></div>
   </div>
 </div>
 
@@ -1904,9 +1938,10 @@ function renderAnalytics() {
 
   chart.innerHTML = '';
 
-  const COL_HIT    = '#4e9e6a';   // medium forest green
-  const COL_PROG   = '#b08828';   // deep old-gold
-  const COL_MISS   = '#b05050';   // muted brick red
+  const palette    = getAnalyticsColors();
+  const COL_HIT    = palette.green;
+  const COL_PROG   = palette.amber;
+  const COL_MISS   = '#b05050';
   const COL_FUTURE = '#2e2e2e';
 
   // One flex:1 slot per day — mirrors the day-picker row exactly (gap:3px, flex:1 per cell)
@@ -1963,6 +1998,93 @@ document.getElementById('analyticsBtn').addEventListener('click', () => {
   btn.textContent = analyticsOpen ? '↓ Analytics' : '↑ Analytics';
   if (analyticsOpen) renderAnalytics();
 });
+
+/* ── Analytics palette customize ── */
+const PALETTES = [
+  // — Lighter / medium tones —
+  { id:1,  group:'Medium',      name:'Forest + Old Gold',      green:'#4e9e6a', amber:'#b08828' },
+  { id:2,  group:'Medium',      name:'Sage + Honey',           green:'#7aaa85', amber:'#c4882a' },
+  { id:3,  group:'Medium',      name:'Emerald + Warm Amber',   green:'#3d9970', amber:'#c49a2a' },
+  { id:4,  group:'Medium',      name:'Seafoam + Bronze',       green:'#3d9e8a', amber:'#b07a30' },
+  { id:5,  group:'Medium',      name:'Mint + Mustard',         green:'#5db87a', amber:'#b8a030' },
+  { id:6,  group:'Medium',      name:'Moss + Copper',          green:'#7a9a58', amber:'#c07040' },
+  { id:7,  group:'Medium',      name:'Teal + Gold',            green:'#4a9e9a', amber:'#c8a020' },
+  { id:8,  group:'Medium',      name:'Olive + Sienna',         green:'#8aa858', amber:'#b86030' },
+  // — Circle-style dark tones —
+  { id:9,  group:'Dark',        name:'Deep Forest + Dark Gold',   green:'#2a6644', amber:'#7a5a10' },
+  { id:10, group:'Dark',        name:'Rich Emerald + Burnt Amber',green:'#1e6e48', amber:'#8a5a14' },
+  { id:11, group:'Dark',        name:'Dark Sage + Warm Ochre',    green:'#3a6a4a', amber:'#7a6018' },
+  { id:12, group:'Dark',        name:'Shadow Green + Deep Honey', green:'#2e5e40', amber:'#906830' },
+  { id:13, group:'Dark',        name:'Jungle + Caramel',          green:'#245c3c', amber:'#8a6020' },
+  { id:14, group:'Dark',        name:'Pine + Antique Gold',       green:'#305a3c', amber:'#9a7020' },
+  { id:15, group:'Dark',        name:'Fern + Dark Copper',        green:'#3e6a46', amber:'#9a5c24' },
+  { id:16, group:'Dark',        name:'Olive + Sienna Bronze',     green:'#4a6030', amber:'#8a5030' },
+];
+
+function getAnalyticsColors() {
+  try {
+    const stored = localStorage.getItem('ot_palette');
+    if (stored) return JSON.parse(stored);
+  } catch(_) {}
+  return { green: '#4e9e6a', amber: '#b08828' }; // default palette 1
+}
+
+function setAnalyticsColors(green, amber) {
+  try { localStorage.setItem('ot_palette', JSON.stringify({ green, amber })); } catch(_) {}
+}
+
+function initPalette() {
+  const container = document.getElementById('acPalette');
+  const btn       = document.getElementById('customizeBtn');
+  if (!container || !btn) return;
+
+  // Render palette grid grouped
+  const groups = ['Medium', 'Dark'];
+  const groupLabels = { Medium: 'Lighter tones', Dark: 'Circle-style — darker tones' };
+
+  groups.forEach(grp => {
+    const header = document.createElement('div');
+    header.style.cssText = 'grid-column:1/-1; font-size:8px; letter-spacing:0.14em; text-transform:uppercase; color:#3a3a3a; padding-top:4px;';
+    header.textContent = groupLabels[grp];
+    container.appendChild(header);
+
+    PALETTES.filter(p => p.group === grp).forEach(p => {
+      const opt = document.createElement('div');
+      opt.className = 'pal-opt';
+      opt.dataset.id = p.id;
+      opt.innerHTML = `
+        <div class="pal-swatches">
+          <div class="pal-swatch" style="background:${p.green}"></div>
+          <div class="pal-swatch" style="background:${p.amber}"></div>
+        </div>
+        <div class="pal-label">${p.name}</div>`;
+      opt.addEventListener('click', () => {
+        container.querySelectorAll('.pal-opt').forEach(o => o.classList.remove('sel'));
+        opt.classList.add('sel');
+        setAnalyticsColors(p.green, p.amber);
+        if (analyticsOpen) renderAnalytics();
+      });
+      container.appendChild(opt);
+    });
+  });
+
+  // Mark current selection
+  const cur = getAnalyticsColors();
+  const match = PALETTES.find(p => p.green === cur.green && p.amber === cur.amber);
+  if (match) {
+    const el = container.querySelector(`[data-id="${match.id}"]`);
+    if (el) el.classList.add('sel');
+  }
+
+  // Toggle open/close
+  btn.addEventListener('click', () => {
+    const open = !container.classList.contains('hidden');
+    container.classList.toggle('hidden', open);
+    btn.textContent = open ? 'Customize' : 'Close';
+  });
+}
+
+initPalette();
 
 /* ── Search ── */
 function openSearchHit(h) {
