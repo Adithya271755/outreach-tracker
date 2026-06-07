@@ -498,11 +498,10 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
   font-size:10px; color:#2a2a2a; letter-spacing:0.04em;
 }
 .analytics-chart {
-  display:flex; align-items:flex-end; gap:4px;
-  overflow-x:auto; padding-bottom:20px; padding-top:4px;
-  scrollbar-width:none; position:relative;
+  display:flex; gap:3px;
+  padding-bottom:20px; padding-top:4px;
+  position:relative;
 }
-.analytics-chart::-webkit-scrollbar { display:none; }
 .analytics-loading {
   display:flex; align-items:center; justify-content:center;
   height:52px; gap:7px; flex:1;
@@ -1881,11 +1880,11 @@ function renderAnalytics() {
   const range = document.getElementById('analyticsRange');
   if (!chart) return;
 
-  const MAX_H = 44; // fixed cap — bar at 100% of target = 44px
+  const MAX_H = 44; // bar at 100% of target = 44px
   const ti    = todayIdx();
 
-  // Gather all days from campaign start to end of current month
-  const monthEnd = new Date(idxToDate(ti).getFullYear(), idxToDate(ti).getMonth()+1, 0);
+  // All days from campaign start to end of current month
+  const monthEnd    = new Date(idxToDate(ti).getFullYear(), idxToDate(ti).getMonth()+1, 0);
   const monthEndIdx = Math.round((monthEnd - CAMPAIGN_START) / 86400000);
   const days = [];
   for (let i = 0; i <= monthEndIdx; i++) {
@@ -1898,67 +1897,57 @@ function renderAnalytics() {
   }
 
   const target   = Math.max(1, D.t);
+  // Range label: campaign start → end of month
   const startLbl = idxToDate(0).toLocaleDateString('en-US', { month:'short', day:'numeric' });
-  const endLbl   = idxToDate(ti).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  const endLbl   = monthEnd.toLocaleDateString('en-US', { month:'short', day:'numeric' });
   range.textContent = startLbl + ' – ' + endLbl;
 
   chart.innerHTML = '';
 
-  // Use the same colors as the rest of the UI
-  const COL_HIT  = 'var(--green)';
-  const COL_PROG = 'var(--amber)';
-  const COL_MISS = 'var(--red)';
-  const COL_ZERO = '#1e1e1e';
+  const COL_HIT    = 'var(--green)';
+  const COL_PROG   = 'var(--amber)';
+  const COL_MISS   = 'var(--red)';
+  const COL_ZERO   = '#1e1e1e';
   const COL_FUTURE = '#2c2c2c';
 
-  // Render past/today bars
-  const pastDays = days.filter(d => !d.future);
-  pastDays.forEach(({ i, n }) => {
-    const st    = statusOf(i, n);
-    const ratio = n === 0 ? 0 : Math.min(1.2, n / target);
-    const bodyH = n === 0 ? 2 : Math.max(4, Math.round(ratio * MAX_H));
+  // One flex:1 slot per day — mirrors the day-picker row exactly (gap:3px, flex:1 per cell)
+  days.forEach(({ i, n, future }) => {
+    const slot = document.createElement('div');
+    slot.style.cssText =
+      `flex:1; min-width:0; display:flex; flex-direction:column;` +
+      `align-items:center; justify-content:flex-end; height:${MAX_H}px; position:relative; cursor:default;`;
 
-    const color = n === 0          ? COL_ZERO :
-      st.gc === 's-hit'            ? COL_HIT  :
-      st.gc === 's-prog'           ? COL_PROG :
-      st.gc === 's-miss'           ? COL_MISS : COL_ZERO;
-
-    const date  = idxToDate(i);
-    const label = date.toLocaleDateString('en-US', { month:'short', day:'numeric' });
-
-    const candle = document.createElement('div');
-    candle.className = 'analytics-candle';
-    candle.style.height = (MAX_H + 4) + 'px';
-
-    const tip = document.createElement('div');
-    tip.className = 'analytics-tooltip';
-    tip.textContent = label + ': ' + n + ' compan' + (n === 1 ? 'y' : 'ies');
-    candle.appendChild(tip);
-
-    const body = document.createElement('div');
-    body.className = 'analytics-body';
-    body.style.height = bodyH + 'px';
-    body.style.background = color;
-    candle.appendChild(body);
-
-    chart.appendChild(candle);
-  });
-
-  // Render future days as a row of evenly-spaced dashes
-  const futureDays = days.filter(d => d.future);
-  if (futureDays.length > 0) {
-    const dashRow = document.createElement('div');
-    dashRow.style.cssText = `display:flex; align-items:flex-end; gap:4px; flex-shrink:0; height:${MAX_H + 4}px;`;
-    futureDays.forEach(() => {
+    if (future) {
       const dash = document.createElement('div');
       dash.style.cssText = `width:6px; height:2px; background:${COL_FUTURE}; border-radius:2px 2px 1px 1px; flex-shrink:0;`;
-      dashRow.appendChild(dash);
-    });
-    chart.appendChild(dashRow);
-  }
+      slot.appendChild(dash);
+    } else {
+      const date  = idxToDate(i);
+      const label = date.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+      const tip   = document.createElement('div');
+      tip.className = 'analytics-tooltip';
+      tip.textContent = label + ': ' + n + ' compan' + (n === 1 ? 'y' : 'ies');
+      slot.appendChild(tip);
 
-  // Scroll to most recent (right)
-  requestAnimationFrame(() => { chart.scrollLeft = chart.scrollWidth; });
+      const st    = statusOf(i, n);
+      const ratio = n === 0 ? 0 : Math.min(1.2, n / target);
+      const bodyH = n === 0 ? 2 : Math.max(4, Math.round(ratio * MAX_H));
+      const color = n === 0       ? COL_ZERO :
+        st.gc === 's-hit'         ? COL_HIT  :
+        st.gc === 's-prog'        ? COL_PROG :
+        st.gc === 's-miss'        ? COL_MISS : COL_ZERO;
+
+      const body = document.createElement('div');
+      body.style.cssText =
+        `width:6px; height:${bodyH}px; background:${color};` +
+        `border-radius:2px 2px 1px 1px; flex-shrink:0; transition:opacity 0.12s;`;
+      slot.appendChild(body);
+      slot.addEventListener('mouseenter', () => body.style.opacity = '0.65');
+      slot.addEventListener('mouseleave', () => body.style.opacity = '1');
+    }
+
+    chart.appendChild(slot);
+  });
 }
 
 let analyticsOpen = false;
