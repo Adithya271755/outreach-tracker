@@ -1156,7 +1156,7 @@ function renderCompanyList() {
     const item=document.createElement('div'); item.className='co-item';
     const hdr=document.createElement('div'); hdr.className='co-header';
     const logo=makeLogo(co.domain);
-    const name=document.createElement('div'); name.className='co-domain'; name.textContent=co.domain||'—';
+    const name=document.createElement('div'); name.className='co-domain'; name.textContent=cleanDomain(co.domain)||'—';
     const cc=co.contacts.length;
     const count=document.createElement('div'); count.className='co-ct-count';
     count.textContent=cc+' contact'+(cc!==1?'s':'');
@@ -1274,7 +1274,7 @@ function openDraftPanel(coIdx, ctIdx) {
   const co=getDayData(cur).companies[coIdx];
   const ct=co.contacts[ctIdx];
   document.getElementById('dpEmail').textContent=ct.email||'—';
-  document.getElementById('dpCompany').textContent=co.domain||'—';
+  document.getElementById('dpCompany').textContent=cleanDomain(co.domain)||'—';
   buildPanelContent(ct);
   document.getElementById('draftPanel').classList.add('open');
   document.body.classList.add('panel-open');
@@ -1313,7 +1313,8 @@ function buildPanelContent(ct) {
     const toRow=document.createElement('div'); toRow.className='compose-field';
     const toLbl=document.createElement('span'); toLbl.className='compose-field-label'; toLbl.textContent='To';
     const toVal=document.createElement('span'); toVal.className='compose-field-value';
-    toVal.textContent=(ct.email||(co&&co.domain)||'—')+(co&&co.domain&&ct.email?' · '+co.domain:'');
+    const coDomain=cleanDomain(co&&co.domain);
+    toVal.textContent=(ct.email||coDomain||'—')+(coDomain&&ct.email?' · '+coDomain:'');
     toRow.append(toLbl,toVal); card.appendChild(toRow);
 
     // Subject row (editable)
@@ -1671,7 +1672,7 @@ function addContact() {
   setTimeout(()=>{const els=document.querySelectorAll('.ctr-email');if(els.length)els[els.length-1].focus();},15);
 }
 function saveCompany() {
-  const inp=document.getElementById('domainInp'),domain=(inp.value||'').trim();
+  const inp=document.getElementById('domainInp'),domain=cleanDomain(inp.value);
   if(!domain){inp.classList.add('err');inp.focus();setTimeout(()=>inp.classList.remove('err'),1500);return;}
   const dd=getDayData(cur);
   const contacts=pendingContacts.filter(c=>c.email.trim()||c.role.trim())
@@ -1691,24 +1692,16 @@ document.getElementById('cancelBtn').addEventListener('click',closeModal);
 document.getElementById('saveBtn').addEventListener('click',saveCompany);
 document.getElementById('addCtBtn').addEventListener('click',addContact);
 document.getElementById('domainInp').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addContact();}});
-// Auto-clean pasted URLs → bare domain
-(function(){
-  function cleanDomain(v){
-    return v.trim()
-      .replace(/^https?:\/\//i,'')
-      .replace(/^www\./i,'')
-      .replace(/[/?#].*$/,'')   // drop path, query, hash
-      .toLowerCase();
-  }
-  const di=document.getElementById('domainInp');
-  di.addEventListener('paste',function(){
-    setTimeout(()=>{ const c=cleanDomain(this.value); if(c!==this.value)this.value=c; },0);
-  });
-  di.addEventListener('blur',function(){
-    const c=cleanDomain(this.value); if(c!==this.value)this.value=c;
-  });
-}());
-document.getElementById('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();});
+// Global domain cleaner — strips protocol, www, path, query, hash
+function cleanDomain(v){
+  return (v||'').trim()
+    .replace(/^https?:\/\//i,'')
+    .replace(/^www\./i,'')
+    .replace(/[/?#].*$/,'')
+    .toLowerCase();
+}
+// Domain is cleaned silently on save — no live flash in the input
+// Overlay click intentionally disabled — modal only closes via Cancel or ×
 
 /* ════════════════════════════════════════
    SHARE  (compressed + compact)
