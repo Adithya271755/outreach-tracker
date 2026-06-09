@@ -1390,7 +1390,26 @@ function buildPanelContent(ct) {
       persist(); renderCompanyList();
       saveBtn.textContent='Saved ✓'; saveBtn.className='dp-btn-green';
     });
-    footer.appendChild(saveBtn);
+
+    // Copy draft
+    const copyBtn=document.createElement('button');
+    copyBtn.className='dp-btn-secondary'; copyBtn.textContent='Copy draft';
+    copyBtn.addEventListener('click',()=>{
+      const ed=document.getElementById('dpEditor');
+      const text=(ed?ed.innerText:'').trim();
+      if(!text){copyBtn.textContent='Nothing to copy';setTimeout(()=>{copyBtn.textContent='Copy draft';},1400);return;}
+      (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>{
+        copyBtn.textContent='Copied ✓';
+        setTimeout(()=>{copyBtn.textContent='Copy draft';},1500);
+      }).catch(()=>{
+        const ta=document.createElement('textarea');
+        ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        copyBtn.textContent='Copied ✓';
+        setTimeout(()=>{copyBtn.textContent='Copy draft';},1500);
+      });
+    });
+    footer.append(copyBtn,saveBtn);
 
   } else if(mode==='viewer-edit') {
     document.getElementById('dpModeLabel').textContent='Review Draft';
@@ -1655,6 +1674,23 @@ document.getElementById('cancelBtn').addEventListener('click',closeModal);
 document.getElementById('saveBtn').addEventListener('click',saveCompany);
 document.getElementById('addCtBtn').addEventListener('click',addContact);
 document.getElementById('domainInp').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addContact();}});
+// Auto-clean pasted URLs → bare domain
+(function(){
+  function cleanDomain(v){
+    return v.trim()
+      .replace(/^https?:\/\//i,'')
+      .replace(/^www\./i,'')
+      .replace(/[/?#].*$/,'')   // drop path, query, hash
+      .toLowerCase();
+  }
+  const di=document.getElementById('domainInp');
+  di.addEventListener('paste',function(){
+    setTimeout(()=>{ const c=cleanDomain(this.value); if(c!==this.value)this.value=c; },0);
+  });
+  di.addEventListener('blur',function(){
+    const c=cleanDomain(this.value); if(c!==this.value)this.value=c;
+  });
+}());
 document.getElementById('overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal();});
 
 /* ════════════════════════════════════════
