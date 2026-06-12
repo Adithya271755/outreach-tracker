@@ -1311,6 +1311,7 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 }
 .toast.toast-success { background:#1a3a2a; border:1px solid #2d6b47; color:#4ade80; }
 .toast.toast-error   { background:#3a1a1a; border:1px solid #6b2d2d; color:#f87171; }
+.toast.toast-info    { background:#1c1c1c; border:1px solid var(--b2); color:var(--t); }
 .toast-icon { font-size:15px; flex-shrink:0; }
 .toast-msg  { flex:1; line-height:1.4; }
 .toast-close {
@@ -2694,8 +2695,33 @@ function saveCompany() {
   const inp=document.getElementById('domainInp'),domain=cleanDomain(inp.value);
   if(!domain){inp.classList.add('err');inp.focus();setTimeout(()=>inp.classList.remove('err'),1500);return;}
   const dd=getDayData(cur);
-  const contacts=pendingContacts.filter(c=>c.email.trim()||c.role.trim())
+  let contacts=pendingContacts.filter(c=>c.email.trim()||c.role.trim())
     .map(c=>({email:c.email.trim(),role:c.role.trim(),draft:c.draft||''}));
+
+  const editingId=editingCoIdx>=0?dd.companies[editingCoIdx].id:null;
+  const existingDomains=new Set(), existingEmails=new Set();
+  for(const dk of Object.keys(D.d)){
+    for(const co of D.d[dk].companies||[]){
+      if(editingId && co.id===editingId) continue;
+      if(co.domain) existingDomains.add(cleanDomain(co.domain));
+      for(const c of co.contacts||[]){
+        if(c.email) existingEmails.add(c.email.trim().toLowerCase());
+      }
+    }
+  }
+
+  if(existingDomains.has(domain)){
+    showToast('This company has already been contacted.', 'info');
+  }
+
+  const blocked=contacts.filter(c=>c.email && existingEmails.has(c.email.toLowerCase()));
+  if(blocked.length){
+    contacts=contacts.filter(c=>!(c.email && existingEmails.has(c.email.toLowerCase())));
+    showToast(blocked.length===1
+      ? 'This email is already in CRM — not added again.'
+      : `${blocked.length} emails are already in CRM — not added again.`, 'info');
+  }
+
   if(editingCoIdx>=0){
     const existing=dd.companies[editingCoIdx];
     const merged=contacts.map(c=>{const prev=(existing.contacts||[]).find(ec=>ec.email===c.email);return{...c,draft:(prev&&prev.draft)?prev.draft:(c.draft||'')};});
@@ -3616,7 +3642,7 @@ function exitPortalView() {
     const t = document.createElement('div');
     t.className = `toast toast-${type}`;
     t.innerHTML = `
-      <span class="toast-icon">${type === 'success' ? '✓' : '✕'}</span>
+      <span class="toast-icon">${type === 'success' ? '✓' : type === 'info' ? 'ℹ' : '✕'}</span>
       <span class="toast-msg">${msg}</span>
       <button class="toast-close" title="Dismiss">×</button>`;
     wrap.appendChild(t);
