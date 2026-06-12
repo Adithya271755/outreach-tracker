@@ -846,6 +846,63 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .page.active { display:block; }
 
 /* ════════════════════════════════════════
+   CONTACTS PAGE
+════════════════════════════════════════ */
+#page-contacts {
+  display:none; position:fixed; top:0; left:56px; right:0; bottom:0;
+  background:var(--bg); z-index:100;
+  flex-direction:column;
+}
+#page-contacts.active { display:flex; }
+.contacts-topbar {
+  display:flex; align-items:center; gap:14px; flex-shrink:0;
+  padding:24px 40px; border-bottom:1px solid var(--b);
+}
+.contacts-topbar .search-wrap { flex:1; max-width:360px; }
+.contacts-count { font-size:11px; color:var(--m); flex-shrink:0; white-space:nowrap; }
+.contacts-filters { display:flex; gap:8px; padding:14px 40px 0; flex-shrink:0; }
+.ct-filter-chip {
+  background:none; border:1px solid var(--b); color:var(--m);
+  font-size:11px; font-weight:500; padding:5px 12px; border-radius:99px;
+  cursor:pointer; font-family:inherit; transition:border-color 0.12s, color 0.12s, background 0.12s;
+}
+.ct-filter-chip:hover { border-color:var(--b2); color:var(--t); }
+.ct-filter-chip.active { background:var(--s2); border-color:var(--b2); color:var(--t); }
+.contacts-table-wrap { flex:1; overflow:auto; padding:0 40px 40px; }
+.contacts-table { width:100%; min-width:880px; border-collapse:collapse; font-size:13px; }
+.contacts-table thead th {
+  text-align:left; font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--m); padding:14px; border-bottom:1px solid var(--b);
+  position:sticky; top:0; background:var(--bg); z-index:1;
+}
+.ct-table-row td { padding:12px 14px; border-bottom:1px solid var(--b); vertical-align:middle; }
+.ct-table-row:hover td { background:var(--s1); }
+.ct-cell-name { width:200px; }
+.ct-name-wrap { display:flex; align-items:center; gap:10px; min-width:0; }
+.ct-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ct-email-text { color:var(--t); }
+.ct-inline-input {
+  width:100%; background:none; border:1px solid transparent; color:var(--t);
+  font-size:13px; font-family:inherit; padding:5px 7px; border-radius:6px; outline:none;
+  transition:border-color 0.12s, background 0.12s;
+}
+.ct-inline-input::placeholder { color:#3a3a3a; }
+.ct-inline-input:hover { background:var(--s2); }
+.ct-inline-input:focus { border-color:var(--b2); background:var(--s2); }
+.ct-status-wrap { display:flex; align-items:center; gap:8px; }
+.ct-status-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.ct-status-select {
+  background:none; border:1px solid transparent; color:var(--t);
+  font-size:12px; font-family:inherit; padding:5px 6px; border-radius:6px;
+  outline:none; cursor:pointer; transition:border-color 0.12s, background 0.12s;
+}
+.ct-status-select:hover { background:var(--s2); }
+.ct-status-select:focus { border-color:var(--b2); background:var(--s2); }
+.ct-company-wrap { display:flex; align-items:center; gap:10px; min-width:0; }
+.ct-company-wrap span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.contacts-empty { font-size:13px; color:#2e2e2e; padding:40px 0; text-align:center; }
+
+/* ════════════════════════════════════════
    EMAIL ACCOUNTS PAGE
 ════════════════════════════════════════ */
 .ea-header { margin-bottom:40px; }
@@ -1341,6 +1398,14 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
         </div>
         <span class="sb-label">Daily Outreach</span>
       </div>
+      <div class="sb-item" data-page="contacts" id="sbContacts">
+        <div class="sb-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <span class="sb-label">Contacts</span>
+      </div>
       <div class="sb-item" data-page="email-accounts" id="sbEmailAccounts">
         <div class="sb-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -1465,6 +1530,34 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 </div>
 
 </div><!-- /page-tracker -->
+
+<!-- ══ Page: Contacts ══ -->
+<div class="page" id="page-contacts">
+  <div class="contacts-topbar">
+    <div class="brand">Contacts</div>
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input id="contactsSearchInp" class="search-inp" type="text" placeholder="Search contacts or companies…" autocomplete="off">
+    </div>
+    <div class="contacts-count" id="contactsCount"></div>
+  </div>
+  <div class="contacts-filters" id="contactsFilters"></div>
+  <div class="contacts-table-wrap">
+    <table class="contacts-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone Number</th>
+          <th>Lead Status</th>
+          <th>Company</th>
+        </tr>
+      </thead>
+      <tbody id="contactsTableBody"></tbody>
+    </table>
+    <div class="contacts-empty" id="contactsEmpty" style="display:none">No contacts yet — add companies and contacts in the Daily Outreach Tracker.</div>
+  </div>
+</div>
 
 <!-- ══ Page: Email Accounts ══ -->
 <div class="page" id="page-email-accounts">
@@ -2000,6 +2093,141 @@ function renderCompanyList() {
     item.append(hdr,panel); root.appendChild(item);
   });
 }
+
+/* ── Contacts page ──
+   Aggregates every contact ever logged across all days into one
+   deduped (by email) list. Names are derived heuristically from the
+   email's local-part (split on . _ -, each word capitalized) since
+   we don't collect a real name anywhere — editable per-contact so a
+   bad guess can be corrected. Phone/lead-status/name overrides live
+   in D.contactsMeta, keyed by lowercased email, and persist normally. */
+const LEAD_STATUSES = ['','New','Qualified','Unqualified','Demo Set','Closed'];
+const LEAD_STATUS_COLORS = {
+  '':'var(--m)', 'New':'#89b4f8', 'Qualified':'#4ade80', 'Unqualified':'#f87171',
+  'Demo Set':'#c084fc', 'Closed':'#fbbf24'
+};
+let contactsStatusFilter = '';
+function deriveNameFromEmail(email) {
+  const local=(email||'').split('@')[0];
+  const parts=local.split(/[._-]+/).filter(Boolean);
+  if(!parts.length) return '';
+  return parts.map(p=>p.charAt(0).toUpperCase()+p.slice(1).toLowerCase()).join(' ');
+}
+function getAllContacts() {
+  const map=new Map();
+  for(const dk of Object.keys(D.d).sort()){
+    const dd=D.d[dk]; if(!dd||!dd.companies) continue;
+    for(const co of dd.companies){
+      for(const c of co.contacts){
+        const email=(c.email||'').trim(); if(!email) continue;
+        map.set(email.toLowerCase(), {email, role:c.role||'', domain:co.domain||''});
+      }
+    }
+  }
+  return Array.from(map.values());
+}
+function renderContactsFilters() {
+  const root=document.getElementById('contactsFilters');
+  if(!root) return;
+  if(!root.children.length){
+    const options=[{label:'All',value:''},...LEAD_STATUSES.filter(s=>s).map(s=>({label:s,value:s}))];
+    options.forEach(o=>{
+      const chip=document.createElement('button');
+      chip.className='ct-filter-chip'; chip.textContent=o.label; chip.dataset.status=o.value;
+      chip.addEventListener('click',()=>{ contactsStatusFilter=o.value; renderContactsTable(); });
+      root.appendChild(chip);
+    });
+  }
+  root.querySelectorAll('.ct-filter-chip').forEach(chip=>{
+    chip.classList.toggle('active', chip.dataset.status===contactsStatusFilter);
+  });
+}
+function renderContactsTable() {
+  const tbody=document.getElementById('contactsTableBody');
+  const emptyEl=document.getElementById('contactsEmpty');
+  const countEl=document.getElementById('contactsCount');
+  if(!tbody) return;
+  tbody.innerHTML='';
+  renderContactsFilters();
+  const meta=D.contactsMeta||(D.contactsMeta={});
+  let contacts=getAllContacts();
+  if(contactsStatusFilter){
+    contacts=contacts.filter(c=>(meta[c.email.toLowerCase()]?.leadStatus||'')===contactsStatusFilter);
+  }
+  const q=(document.getElementById('contactsSearchInp')?.value||'').trim().toLowerCase();
+  if(q){
+    contacts=contacts.filter(c=>
+      c.email.toLowerCase().includes(q) ||
+      cleanDomain(c.domain).includes(q) ||
+      deriveNameFromEmail(c.email).toLowerCase().includes(q)
+    );
+  }
+  contacts.sort((a,b)=>deriveNameFromEmail(a.email).localeCompare(deriveNameFromEmail(b.email)));
+  countEl.textContent=contacts.length+(contacts.length===1?' contact':' contacts');
+  if(contacts.length===0){ emptyEl.style.display=''; return; }
+  emptyEl.style.display='none';
+  contacts.forEach(c=>{
+    const key=c.email.toLowerCase();
+    const m=meta[key]||(meta[key]={});
+    const tr=document.createElement('tr'); tr.className='ct-table-row';
+
+    const tdName=document.createElement('td'); tdName.className='ct-cell ct-cell-name';
+    const nameWrap=document.createElement('div'); nameWrap.className='ct-name-wrap';
+    const avatar=makeLogo(c.domain);
+    const displayName=(m.name!==undefined?m.name:deriveNameFromEmail(c.email));
+    const nameInp=document.createElement('input');
+    nameInp.type='text'; nameInp.className='ct-inline-input ct-name'; nameInp.placeholder='—';
+    nameInp.value=displayName;
+    nameInp.addEventListener('change',()=>{m.name=nameInp.value.trim();persist();});
+    nameWrap.append(avatar,nameInp);
+    tdName.appendChild(nameWrap);
+
+    const tdEmail=document.createElement('td'); tdEmail.className='ct-cell';
+    const emailSpan=document.createElement('span'); emailSpan.className='ct-email-text';
+    emailSpan.textContent=c.email;
+    tdEmail.appendChild(emailSpan);
+
+    const tdPhone=document.createElement('td'); tdPhone.className='ct-cell';
+    const phoneInp=document.createElement('input');
+    phoneInp.type='text'; phoneInp.className='ct-inline-input'; phoneInp.placeholder='--';
+    phoneInp.value=m.phone||'';
+    phoneInp.addEventListener('change',()=>{m.phone=phoneInp.value.trim();persist();});
+    tdPhone.appendChild(phoneInp);
+
+    const tdStatus=document.createElement('td'); tdStatus.className='ct-cell';
+    const statusWrap=document.createElement('div'); statusWrap.className='ct-status-wrap';
+    const dot=document.createElement('span'); dot.className='ct-status-dot';
+    const select=document.createElement('select'); select.className='ct-status-select';
+    LEAD_STATUSES.forEach(s=>{
+      const opt=document.createElement('option'); opt.value=s; opt.textContent=s||'--';
+      select.appendChild(opt);
+    });
+    select.value=m.leadStatus||'';
+    const updateStatusStyle=()=>{
+      const color=LEAD_STATUS_COLORS[select.value]||'var(--m)';
+      dot.style.background=color; select.style.color=color;
+    };
+    updateStatusStyle();
+    select.addEventListener('change',()=>{m.leadStatus=select.value;updateStatusStyle();persist();renderContactsFilters();});
+    statusWrap.append(dot,select);
+    tdStatus.appendChild(statusWrap);
+
+    const tdCompany=document.createElement('td'); tdCompany.className='ct-cell';
+    if(c.domain){
+      const compWrap=document.createElement('div'); compWrap.className='ct-company-wrap';
+      compWrap.appendChild(makeLogo(c.domain));
+      const compName=document.createElement('span'); compName.textContent=cleanDomain(c.domain);
+      compWrap.appendChild(compName);
+      tdCompany.appendChild(compWrap);
+    } else {
+      tdCompany.textContent='—';
+    }
+
+    tr.append(tdName,tdEmail,tdPhone,tdStatus,tdCompany);
+    tbody.appendChild(tr);
+  });
+}
+document.getElementById('contactsSearchInp')?.addEventListener('input',renderContactsTable);
 
 /* ── Grid ── */
 function renderGrid() {
@@ -3469,7 +3697,7 @@ async function getMicrosoftToken(emailHint) {
    PAGE NAVIGATION
 ══════════════════════════════════════════════ */
 (function() {
-  const PAGE_IDS = ['tracker', 'email-accounts', 'inbox', 'settings'];
+  const PAGE_IDS = ['tracker', 'contacts', 'email-accounts', 'inbox', 'settings'];
 
   function switchPage(pageId) {
     PAGE_IDS.forEach(id => {
@@ -3480,6 +3708,7 @@ async function getMicrosoftToken(emailHint) {
       item.classList.toggle('sb-active', item.dataset.page === pageId);
     });
     if (pageId === 'email-accounts') renderConnectedAccounts();
+    if (pageId === 'contacts') renderContactsTable();
   }
 
   document.querySelectorAll('.sb-item[data-page]').forEach(item => {
