@@ -1429,6 +1429,14 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
         </div>
         <span class="sb-label">Email Accounts</span>
       </div>
+      <div class="sb-item" data-page="find-companies" id="sbFindCompanies">
+        <div class="sb-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <span class="sb-label">Find Companies</span>
+      </div>
     </div>
   </div>
 
@@ -1642,6 +1650,22 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 </div>
 
 </div><!-- /page-email-accounts -->
+
+<!-- ══ Page: Find Companies ══ -->
+<div class="page" id="page-find-companies">
+
+<div class="topbar">
+  <div class="brand">Find Companies</div>
+</div>
+
+<div class="ea-header">
+  <div class="ea-title">Find Companies</div>
+  <div class="ea-subtitle">Search the web for companies and contacts to add to your outreach list</div>
+</div>
+
+<div class="ea-empty">Coming soon.</div>
+
+</div><!-- /page-find-companies -->
 
 <!-- ══ Page: Inbox ══ -->
 <div class="page" id="page-inbox">
@@ -2071,26 +2095,29 @@ function renderCompanyList() {
     // contacts) for a beat and the panel opens; a click pins it open until
     // clicked again. Hovering elsewhere on the row (logo/count/arrow) does
     // not open or hold it open.
-    item._pinned=false; item._hoveringNow=false; item._open=false;
+    item._pinned=false; item._open=false;
     item._hoverTimer=null; item._closeTimer=null;
     const setCoOpen=open=>{
       item._open=open;
       panel.classList.toggle('open',open);
       arrow.classList.toggle('open',open);
     };
+    // Use the live :hover state (not a flag toggled by enter/leave handlers)
+    // so that phantom mouseenter/mouseleave pairs fired by the browser when
+    // the panel's expand animation shifts layout under a stationary cursor
+    // can't desync the flag and cause open/close flicker.
+    const isHoveringZone=()=>name.matches(':hover')||panel.matches(':hover');
     const onHoverZoneEnter=()=>{
-      item._hoveringNow=true;
       clearTimeout(item._closeTimer);
       if(item._open||item._pinned) return;
       clearTimeout(item._hoverTimer);
-      item._hoverTimer=setTimeout(()=>{ if(item._hoveringNow) setCoOpen(true); },300);
+      item._hoverTimer=setTimeout(()=>{ if(isHoveringZone()) setCoOpen(true); },300);
     };
     const onHoverZoneLeave=()=>{
-      item._hoveringNow=false;
       clearTimeout(item._hoverTimer);
       if(item._pinned||!item._open) return;
       item._closeTimer=setTimeout(()=>{
-        if(!item._hoveringNow&&!item._pinned) setCoOpen(false);
+        if(!isHoveringZone()&&!item._pinned) setCoOpen(false);
       },150);
     };
     [name,panel].forEach(el=>{
@@ -3767,7 +3794,7 @@ async function getMicrosoftToken(emailHint) {
    PAGE NAVIGATION
 ══════════════════════════════════════════════ */
 (function() {
-  const PAGE_IDS = ['tracker', 'contacts', 'email-accounts', 'inbox', 'settings'];
+  const PAGE_IDS = ['tracker', 'contacts', 'email-accounts', 'find-companies', 'inbox', 'settings'];
 
   function switchPage(pageId) {
     PAGE_IDS.forEach(id => {
