@@ -21,7 +21,7 @@ body {
   background:var(--bg); color:var(--t);
   font-family:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
   min-height:100vh; padding:52px 40px 80px;
-  max-width:700px; margin:0 auto;
+  max-width:880px; margin:0 auto;
   transition: margin-right 0.15s cubic-bezier(0.6, 0, 1, 0.85) 0.1s;
 }
 /* Shift content left when draft panel is open so it never overlaps */
@@ -66,16 +66,20 @@ body.panel-open { margin-right: calc(var(--dp-w) + 16px); }
 .search-inp::placeholder { color:#3a3a3a; }
 .search-inp:focus { border-color:var(--b2); }
 .search-icon { position:absolute; left:9px; top:50%; transform:translateY(-50%); color:#3a3a3a; font-size:13px; pointer-events:none; }
-.search-results { position:absolute; top:calc(100% + 5px); left:0; right:0; background:var(--s1); border:1px solid var(--b2); border-radius:8px; z-index:300; max-height:260px; overflow-y:auto; display:none; box-shadow:0 12px 48px rgba(0,0,0,0.65); }
+.search-results { position:absolute; top:calc(100% + 5px); left:-6px; right:-6px; background:var(--s1); border:1px solid var(--b2); border-radius:8px; z-index:300; max-height:260px; overflow-y:auto; display:none; box-shadow:0 12px 48px rgba(0,0,0,0.65); }
 .search-results.open { display:block; }
 .sr-empty { padding:12px 14px; font-size:12px; color:var(--m); }
-.sr-item { padding:10px 14px; border-bottom:1px solid var(--b); cursor:pointer; transition:background 0.1s; }
+.sr-item { padding:11px 14px; border-bottom:1px solid var(--b); cursor:pointer; transition:background 0.1s; }
 .sr-item:last-child { border-bottom:none; }
 .sr-item:hover { background:var(--s2); }
+.sr-item-inner { display:flex; align-items:center; gap:10px; }
+.sr-logo { width:24px; height:24px; font-size:10px; }
+.sr-content { flex:1; min-width:0; }
 .sr-row { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
 .sr-main { font-size:13px; color:var(--t); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .sr-date { font-size:10px; color:var(--m); flex-shrink:0; }
-.sr-sub  { font-size:11px; color:var(--m); margin-top:2px; }
+.sr-sub  { font-size:11px; color:var(--m); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sr-divider { height:1px; background:var(--b); margin:6px 10px; }
 .target-wrap { display:flex; align-items:center; gap:6px; color:var(--m); font-size:12px; flex-shrink:0; }
 .target-inp { width:48px; background:var(--s1); border:1px solid var(--b); color:var(--t); text-align:center; padding:4px 0; border-radius:6px; font-size:12px; outline:none; font-variant-numeric:tabular-nums; -moz-appearance:textfield; transition:border-color 0.12s; }
 .target-inp::-webkit-inner-spin-button,.target-inp::-webkit-outer-spin-button { -webkit-appearance:none; }
@@ -483,6 +487,15 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .ctr-role { flex:2; background:none; border:none; border-bottom:1px solid var(--b); color:var(--m); font-size:12px; padding:3px 4px; outline:none; font-family:inherit; transition:border-color 0.12s; min-width:0; }
 .ctr-role::placeholder { color:#3a3a3a; }
 .ctr-role:focus { border-bottom-color:var(--b2); }
+.ctr-email:-webkit-autofill, .ctr-role:-webkit-autofill,
+.ctr-email:-webkit-autofill:focus, .ctr-role:-webkit-autofill:focus {
+  -webkit-text-fill-color:var(--t);
+  -webkit-box-shadow:0 0 0 1000px var(--s1) inset;
+  box-shadow:0 0 0 1000px var(--s1) inset;
+  caret-color:var(--t);
+  transition:background-color 5000s ease-in-out 0s;
+}
+.ctr-role:-webkit-autofill { -webkit-text-fill-color:var(--m); }
 .ctr-del { background:none; border:none; color:transparent; cursor:pointer; font-size:16px; line-height:1; padding:2px; transition:color 0.1s; flex-shrink:0; }
 .ctr:hover .ctr-del { color:var(--d); }
 .ctr-del:hover { color:var(--red) !important; }
@@ -2714,12 +2727,22 @@ function saveCompany() {
     showToast('This company has already been contacted.', 'info');
   }
 
-  const blocked=contacts.filter(c=>c.email && existingEmails.has(c.email.toLowerCase()));
-  if(blocked.length){
-    contacts=contacts.filter(c=>!(c.email && existingEmails.has(c.email.toLowerCase())));
-    showToast(blocked.length===1
-      ? 'This email is already in CRM — not added again.'
-      : `${blocked.length} emails are already in CRM — not added again.`, 'info');
+  // Drop exact-duplicate emails entered more than once in this form
+  const seen=new Set(), deduped=[]; let dupInForm=0;
+  for(const c of contacts){
+    const key=c.email.toLowerCase();
+    if(c.email && seen.has(key)){ dupInForm++; continue; }
+    if(c.email) seen.add(key);
+    deduped.push(c);
+  }
+  contacts=deduped;
+
+  if(dupInForm){
+    showToast(dupInForm===1
+      ? 'Duplicate email removed — already added above.'
+      : `${dupInForm} duplicate emails removed — already added above.`, 'info');
+  } else if(contacts.some(c=>c.email && existingEmails.has(c.email.toLowerCase()))){
+    showToast('This email is already in CRM.', 'info');
   }
 
   if(editingCoIdx>=0){
@@ -3202,29 +3225,50 @@ function openSearchHit(h) {
 }
 
 document.getElementById('searchInp').addEventListener('input',function(){
-  const q=this.value.trim().toLowerCase(),res=document.getElementById('searchResults');
+  const raw=this.value.trim().toLowerCase();
+  const q=cleanDomain(raw)||raw,res=document.getElementById('searchResults');
   res.innerHTML=''; if(!q){res.classList.remove('open');return;}
-  const hits=[]; outer:
+  const exact=[],close=[];
   for(const k of Object.keys(D.d).sort()){
     const dd=D.d[k]; if(!dd||!dd.companies)continue;
     const di=Math.round((new Date(k+'T00:00:00')-CAMPAIGN_START)/86400000);
     for(let ci=0;ci<dd.companies.length;ci++){
       const co=dd.companies[ci];
-      const dm=co.domain.toLowerCase().includes(q);
+      const codomain=cleanDomain(co.domain);
+      const dm=codomain.includes(q);
+      const domainExact=codomain===q;
       for(let ti=0;ti<co.contacts.length;ti++){
         const c=co.contacts[ti];
-        if(c.email.toLowerCase().includes(q)||c.role.toLowerCase().includes(q)||dm){
-          hits.push({di,main:c.email||co.domain,sub:co.domain+(c.role?' · '+c.role:''),date:k,coIdx:ci,ctIdx:ti});
-          if(hits.length>=8)break outer;
+        const email=c.email.toLowerCase();
+        if(email.includes(q)||c.role.toLowerCase().includes(q)||dm){
+          const hit={di,main:c.email||co.domain,sub:co.domain+(c.role?' · '+c.role:''),date:k,coIdx:ci,ctIdx:ti,domain:co.domain};
+          (domainExact||email===q?exact:close).push(hit);
         }
       }
-      if(dm&&co.contacts.length===0){hits.push({di,main:co.domain,sub:k,date:k,coIdx:ci,ctIdx:undefined});if(hits.length>=8)break outer;}
+      if(dm&&co.contacts.length===0){
+        const hit={di,main:co.domain,sub:k,date:k,coIdx:ci,ctIdx:undefined,domain:co.domain};
+        (domainExact?exact:close).push(hit);
+      }
     }
+  }
+  const hits=exact.slice(0,5);
+  if(close.length){
+    if(hits.length)hits.push({divider:true});
+    hits.push(...close.slice(0,3));
   }
   if(hits.length===0){res.innerHTML='<div class="sr-empty">No results found</div>';}
   else hits.forEach(h=>{
+    if(h.divider){
+      const div=document.createElement('div');div.className='sr-divider';
+      res.appendChild(div);return;
+    }
     const item=document.createElement('div');item.className='sr-item';
-    item.innerHTML=`<div class="sr-row"><span class="sr-main">${esc(h.main)}</span><span class="sr-date">${esc(h.date)}</span></div><div class="sr-sub">${esc(h.sub)}</div>`;
+    const inner=document.createElement('div');inner.className='sr-item-inner';
+    const logo=makeLogo(h.domain);logo.classList.add('sr-logo');
+    const content=document.createElement('div');content.className='sr-content';
+    content.innerHTML=`<div class="sr-row"><span class="sr-main">${esc(h.main)}</span><span class="sr-date">${esc(h.date)}</span></div><div class="sr-sub">${esc(h.sub)}</div>`;
+    inner.append(logo,content);
+    item.appendChild(inner);
     item.addEventListener('click',()=>openSearchHit(h));
     res.appendChild(item);
   });
