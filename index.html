@@ -19,7 +19,7 @@
 }
 body {
   background:var(--bg); color:var(--t);
-  font-family:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
+  font-family:Verdana,Geneva,'DejaVu Sans',sans-serif;
   min-height:100vh; padding:52px 40px 80px;
   max-width:880px; margin:0 auto;
   transition: margin-right 0.15s cubic-bezier(0.6, 0, 1, 0.85) 0.1s;
@@ -478,8 +478,7 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .mfield-inp::placeholder { color:#3a3a3a; }
 .mfield-inp:focus { border-color:var(--b2); }
 .mfield-inp.err { border-color:var(--red) !important; }
-.ctr { display:flex; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid var(--b); animation:fadeup 0.15s ease; }
-.ctr:last-child { border-bottom:none; }
+.ctr { display:flex; align-items:center; gap:8px; padding:10px 0; animation:fadeup 0.15s ease; }
 .ctr-dot { width:8px; height:8px; border-radius:50%; background:var(--green); flex-shrink:0; }
 .ctr-email { flex:3; background:none; border:none; border-bottom:1px solid var(--b); color:var(--t); font-size:12px; padding:3px 4px; outline:none; font-family:inherit; transition:border-color 0.12s; min-width:0; }
 .ctr-email::placeholder { color:#3a3a3a; }
@@ -984,6 +983,56 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 }
 .ea-open-inbox-btn:hover { border-color:#89b4f8; color:#89b4f8; }
 
+/* ══ Today page ══ */
+.today-wrap { padding:8px 0 60px; }
+.today-greeting { margin:24px 0 28px; }
+.today-greeting-line { font-size:28px; font-weight:300; letter-spacing:-0.5px; color:#cfcfcf; }
+.today-greeting-date { font-size:12px; color:#5a5a5a; margin-top:6px; letter-spacing:0.5px; text-transform:uppercase; }
+.today-grid { display:grid; grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr); grid-auto-rows:auto; gap:16px; }
+.today-card { background:#0f0f0f; border:1px solid #1a1a1a; border-radius:12px; padding:24px; }
+.today-card-title { font-size:11px; color:#5a5a5a; letter-spacing:0.6px; text-transform:uppercase; margin-bottom:14px; }
+.today-ring-card { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:280px; }
+.today-ring-wrap { position:relative; width:200px; height:200px; }
+.today-ring-bg { stroke:#181818; }
+.today-ring-fg { stroke:#cfcfcf; transition:stroke-dashoffset 0.8s cubic-bezier(.2,.7,.2,1), stroke 0.3s; }
+.today-ring-fg.hit { stroke:#7dc984; }
+.today-ring-fg.mid { stroke:#d0a85c; }
+.today-ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.today-ring-num { font-size:54px; font-weight:300; color:#e5e5e5; letter-spacing:-1px; line-height:1; }
+.today-ring-tgt { font-size:12px; color:#5a5a5a; margin-top:6px; letter-spacing:0.4px; }
+.today-ring-verdict { font-size:13px; color:#8a8a8a; margin-top:16px; text-align:center; }
+.today-stats-card { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+.today-stat { padding:6px 4px; }
+.today-stat-num { font-size:36px; font-weight:300; color:#e5e5e5; letter-spacing:-0.8px; line-height:1; }
+.today-stat-lbl { font-size:11px; color:#8a8a8a; margin-top:8px; letter-spacing:0.4px; text-transform:uppercase; }
+.today-stat-sub { font-size:11px; color:#4a4a4a; margin-top:4px; }
+.today-spark-card { grid-column:1 / -1; }
+.today-spark { display:flex; align-items:flex-end; gap:6px; height:60px; padding:6px 0 0; }
+.today-spark-bar { flex:1; min-height:3px; background:#222; border-radius:3px 3px 0 0; position:relative; transition:background 0.2s; }
+.today-spark-bar.hit { background:#3d6b41; }
+.today-spark-bar.mid { background:#5b4a26; }
+.today-spark-bar.miss { background:#3a2a2a; }
+.today-spark-bar.today { box-shadow:0 0 0 1px #cfcfcf inset; }
+.today-spark-bar:hover { filter:brightness(1.4); }
+.today-spark-bar-tip { position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%); background:#000; color:#cfcfcf; font-size:10px; padding:3px 6px; border-radius:4px; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity 0.15s; border:1px solid #222; }
+.today-spark-bar:hover .today-spark-bar-tip { opacity:1; }
+.today-actions-card { grid-column:1 / -1; }
+.today-resume { font-size:13px; color:#cfcfcf; line-height:1.5; margin-bottom:14px; }
+.today-resume-empty { color:#5a5a5a; }
+.today-resume-link { color:#cfcfcf; cursor:pointer; border-bottom:1px dashed #3a3a3a; padding-bottom:1px; }
+.today-resume-link:hover { color:#fff; border-color:#cfcfcf; }
+.today-leftovers { font-size:12px; color:#8a8a8a; margin-bottom:14px; }
+.today-leftovers-chip { display:inline-block; background:#1d1700; color:#d0a85c; border:1px solid #3a2c00; padding:4px 10px; border-radius:14px; font-size:11px; cursor:pointer; margin-right:6px; }
+.today-leftovers-chip:hover { background:#2a2200; }
+.today-jump-btn { background:transparent; color:#cfcfcf; border:1px solid #2a2a2a; padding:9px 18px; border-radius:6px; font-size:13px; cursor:pointer; transition:all 0.15s; }
+.today-jump-btn:hover { background:#181818; border-color:#3a3a3a; color:#fff; }
+@media (max-width:760px) { .today-grid { grid-template-columns:1fr; } .today-stats-card { grid-template-columns:repeat(3,1fr); } }
+
+/* ══ Cross-day duplicate chip (Daily Outreach) ══ */
+.ct-dup-chip { display:inline-block; background:#1d0a0a; color:#d08585; border:1px solid #3a1818; padding:1px 7px; border-radius:10px; font-size:10px; margin-left:6px; cursor:default; }
+.ct-dup-chip:hover { background:#2a1010; }
+.co-dup-chip { display:inline-block; background:#1d1700; color:#d0a85c; border:1px solid #3a2c00; padding:1px 7px; border-radius:10px; font-size:10px; margin-left:6px; cursor:default; }
+
 /* ══ Inbox page ══ */
 #page-inbox {
   display:none;
@@ -1404,7 +1453,15 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 
     <!-- Main nav items -->
     <div class="sb-nav">
-      <div class="sb-item sb-active" data-page="tracker" id="sbTracker">
+      <div class="sb-item sb-active" data-page="today" id="sbToday">
+        <div class="sb-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>
+          </svg>
+        </div>
+        <span class="sb-label">Today</span>
+      </div>
+      <div class="sb-item" data-page="tracker" id="sbTracker">
         <div class="sb-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2.5"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
@@ -1457,8 +1514,78 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 
 <div class="ro-banner" id="roBanner">👁 Shared view — read only</div>
 
+<!-- ══ Page: Today (default landing) ══ -->
+<div class="page active" id="page-today">
+
+<div class="topbar">
+  <div class="brand">Today</div>
+</div>
+
+<div class="today-wrap">
+  <div class="today-greeting">
+    <div class="today-greeting-line" id="todayGreeting">Good morning</div>
+    <div class="today-greeting-date" id="todayDateLine"></div>
+  </div>
+
+  <div class="today-grid">
+    <!-- Big progress ring -->
+    <div class="today-card today-ring-card">
+      <div class="today-ring-wrap">
+        <svg class="today-ring" viewBox="0 0 200 200" width="200" height="200">
+          <circle class="today-ring-bg" cx="100" cy="100" r="86" fill="none" stroke-width="14"/>
+          <circle class="today-ring-fg" id="todayRingFg" cx="100" cy="100" r="86" fill="none" stroke-width="14"
+                  stroke-linecap="round" transform="rotate(-90 100 100)"
+                  stroke-dasharray="540.4" stroke-dashoffset="540.4"/>
+        </svg>
+        <div class="today-ring-center">
+          <div class="today-ring-num" id="todayRingNum">0</div>
+          <div class="today-ring-tgt"><span id="todayRingTgt">50</span> target</div>
+        </div>
+      </div>
+      <div class="today-ring-verdict" id="todayVerdict">No companies logged yet today</div>
+    </div>
+
+    <!-- Streak + week stats -->
+    <div class="today-card today-stats-card">
+      <div class="today-stat">
+        <div class="today-stat-num" id="todayStreakNum">0</div>
+        <div class="today-stat-lbl">Day streak</div>
+        <div class="today-stat-sub" id="todayStreakSub">Hit half-target to continue</div>
+      </div>
+      <div class="today-stat">
+        <div class="today-stat-num" id="todayWeekNum">0</div>
+        <div class="today-stat-lbl">This week</div>
+        <div class="today-stat-sub" id="todayWeekSub">across 7 days</div>
+      </div>
+      <div class="today-stat">
+        <div class="today-stat-num" id="todayBestNum">0</div>
+        <div class="today-stat-lbl">Best day (14d)</div>
+        <div class="today-stat-sub" id="todayBestSub">—</div>
+      </div>
+    </div>
+
+    <!-- Sparkline -->
+    <div class="today-card today-spark-card">
+      <div class="today-card-title">Last 14 days</div>
+      <div class="today-spark" id="todaySpark"></div>
+    </div>
+
+    <!-- Resume + leftovers -->
+    <div class="today-card today-actions-card">
+      <div class="today-card-title">Pick up where you left off</div>
+      <div class="today-resume" id="todayResume">
+        <div class="today-resume-empty">Open Daily Outreach to start the day.</div>
+      </div>
+      <div class="today-leftovers" id="todayLeftovers"></div>
+      <button class="today-jump-btn" id="todayJumpBtn">Open today's tracker →</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page-today -->
+
 <!-- ══ Page: Daily Outreach Tracker ══ -->
-<div class="page active" id="page-tracker">
+<div class="page" id="page-tracker">
 
 <div class="topbar">
   <div class="brand">Daily Outreach</div>
@@ -2012,6 +2139,275 @@ function render() {
   document.getElementById('addBtn').style.display=isReadOnly?'none':'';
   renderCompanyList();
   renderGrid();
+  // Today page derives its numbers from the same data, so refresh both.
+  renderTodayPage();
+}
+
+/* ── Today page ── */
+function computeStreak() {
+  // Consecutive days (including today if it counts) where companies >= half of target.
+  const t = D.t || 50;
+  const half = Math.max(1, Math.ceil(t * 0.5));
+  const ti = todayIdx();
+  let streak = 0;
+  // If today is at-or-above half, start counting from today; else from yesterday.
+  let i = companyCount(ti) >= half ? ti : ti - 1;
+  while (i > JAN1_IDX) {
+    if (companyCount(i) >= half) streak++;
+    else break;
+    i--;
+  }
+  return streak;
+}
+function pickGreeting() {
+  const h = new Date().getHours();
+  if (h < 5) return 'Up late';
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  if (h < 22) return 'Good evening';
+  return 'Up late';
+}
+function findResumeTarget() {
+  // Returns the most useful "where was I" pointer for today or yesterday.
+  // Priority: latest contact WITH a draft (kind:'draft') beats the latest
+  // contact without one (kind:'contact'). If neither exists, returns null
+  // and the panel falls back to its initial empty state.
+  const ti = todayIdx();
+  let fallback = null;
+  for (let off = 0; off <= 1; off++) {
+    const dd = D.d[dateKey(ti - off)];
+    if (!dd || !dd.companies) continue;
+    for (let ci = dd.companies.length - 1; ci >= 0; ci--) {
+      const co = dd.companies[ci];
+      if (!co.contacts || !co.contacts.length) continue;
+      for (let xi = co.contacts.length - 1; xi >= 0; xi--) {
+        const ct = co.contacts[xi];
+        if (ct.draft && ct.draft.trim()) {
+          return { kind:'draft', dayOffset: off, dayIdx: ti - off, ci, xi, domain: co.domain, email: ct.email };
+        }
+        if (!fallback) {
+          fallback = { kind:'contact', dayOffset: off, dayIdx: ti - off, ci, xi, domain: co.domain, email: ct.email };
+        }
+      }
+    }
+  }
+  return fallback;
+}
+function yesterdayLeftovers() {
+  const ti = todayIdx();
+  const dd = D.d[dateKey(ti - 1)];
+  if (!dd || !dd.companies) return 0;
+  let count = 0;
+  dd.companies.forEach(co => {
+    (co.contacts || []).forEach(ct => {
+      if (!ct.draft || !ct.draft.trim()) count++;
+    });
+  });
+  return count;
+}
+function renderTodayPage() {
+  const tpage = document.getElementById('page-today');
+  if (!tpage) return;
+  const t = D.t || 50;
+  const ti = todayIdx();
+  const n = companyCount(ti);
+
+  // Greeting + date
+  const greet = document.getElementById('todayGreeting');
+  const dateLine = document.getElementById('todayDateLine');
+  if (greet) greet.textContent = pickGreeting() + ((currentUserEmail && currentUserEmail !== OWNER_EMAIL) ? '' : (isOwner ? ', Adithya' : ''));
+  if (dateLine) {
+    const d = idxToDate(ti);
+    dateLine.textContent = d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  }
+
+  // Progress ring
+  const ring = document.getElementById('todayRingFg');
+  const ringNum = document.getElementById('todayRingNum');
+  const ringTgt = document.getElementById('todayRingTgt');
+  const verdict = document.getElementById('todayVerdict');
+  if (ring && ringNum && ringTgt && verdict) {
+    const circumference = 2 * Math.PI * 86; // ~540.4
+    const pct = t > 0 ? Math.min(n / t, 1) : 0;
+    ring.setAttribute('stroke-dashoffset', String(circumference * (1 - pct)));
+    // Smooth red → yellow → green hue gradient driven by progress %.
+    // hue 0 = red, 60 = yellow, 120 = green. CSS transition on stroke
+    // (defined in .today-ring-fg) makes color changes fade rather than snap.
+    const hue = pct * 120;
+    const sat = 50 + pct * 15;     // 50% at 0, 65% at target — slight glow as you finish
+    const light = 58;
+    ring.style.stroke = `hsl(${hue}, ${sat}%, ${light}%)`;
+    ring.classList.remove('hit','mid'); // legacy class rules no longer used
+    ringNum.textContent = n;
+    ringTgt.textContent = t;
+    if (n === 0) verdict.textContent = 'No companies logged yet. Open the tracker to start.';
+    else if (n >= t) verdict.textContent = `Complete · ${n - t >= 0 ? '+' + (n - t) : ''} over target`;
+    else {
+      const remaining = t - n;
+      const now = new Date();
+      const dayStart = new Date(now); dayStart.setHours(9, 0, 0, 0);
+      const elapsedH = Math.max(0.5, (now - dayStart) / 3600000);
+      const pace = n / elapsedH;
+      let etaTxt = '';
+      if (pace > 0.2) {
+        const hoursLeft = remaining / pace;
+        const eta = new Date(now.getTime() + hoursLeft * 3600000);
+        if (eta.getHours() < 22) etaTxt = ' · finish by ' + eta.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+      }
+      verdict.textContent = `${remaining} to go${etaTxt}`;
+    }
+  }
+
+  // Streak + week stats
+  const streakEl = document.getElementById('todayStreakNum');
+  const streakSub = document.getElementById('todayStreakSub');
+  const streak = computeStreak();
+  if (streakEl) streakEl.textContent = streak;
+  if (streakSub) {
+    const half = Math.max(1, Math.ceil(t * 0.5));
+    if (streak === 0) streakSub.textContent = `Log ${half}+ today to start`;
+    else if (n >= half) streakSub.textContent = 'Streak alive today';
+    else streakSub.textContent = `${half - n} more to keep it alive`;
+  }
+  const weekEl = document.getElementById('todayWeekNum');
+  const weekSub = document.getElementById('todayWeekSub');
+  let weekTotal = 0;
+  for (let i = ti - 6; i <= ti; i++) weekTotal += companyCount(i);
+  if (weekEl) weekEl.textContent = weekTotal;
+  if (weekSub) weekSub.textContent = `of ${t * 7} target across 7d`;
+  const bestEl = document.getElementById('todayBestNum');
+  const bestSub = document.getElementById('todayBestSub');
+  let bestN = 0, bestIdx = ti;
+  for (let i = ti - 13; i <= ti; i++) {
+    const c = companyCount(i);
+    if (c > bestN) { bestN = c; bestIdx = i; }
+  }
+  if (bestEl) bestEl.textContent = bestN;
+  if (bestSub) {
+    if (bestN === 0) bestSub.textContent = 'No activity yet';
+    else if (bestIdx === ti) bestSub.textContent = 'today';
+    else {
+      const d = idxToDate(bestIdx);
+      bestSub.textContent = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+    }
+  }
+
+  // Sparkline (14 days)
+  const spark = document.getElementById('todaySpark');
+  if (spark) {
+    spark.innerHTML = '';
+    const days = [];
+    for (let i = ti - 13; i <= ti; i++) days.push({ i, n: companyCount(i) });
+    const maxN = Math.max(t, ...days.map(d => d.n)) || 1;
+    days.forEach(d => {
+      const bar = document.createElement('div');
+      bar.className = 'today-spark-bar';
+      const h = Math.max(3, Math.round((d.n / maxN) * 60));
+      bar.style.height = h + 'px';
+      const pctOfTarget = d.n / t;
+      if (pctOfTarget >= 1) bar.classList.add('hit');
+      else if (pctOfTarget >= 0.5) bar.classList.add('mid');
+      else if (d.n > 0 || d.i < ti) bar.classList.add('miss');
+      if (d.i === ti) bar.classList.add('today');
+      const tip = document.createElement('span');
+      tip.className = 'today-spark-bar-tip';
+      const dt = idxToDate(d.i);
+      tip.textContent = dt.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' · ' + d.n;
+      bar.appendChild(tip);
+      bar.addEventListener('click', () => {
+        cur = d.i;
+        if (typeof window._switchPage === 'function') window._switchPage('tracker');
+        render();
+      });
+      bar.style.cursor = 'pointer';
+      spark.appendChild(bar);
+    });
+  }
+
+  // Resume + leftovers
+  const resumeEl = document.getElementById('todayResume');
+  if (resumeEl) {
+    const r = findResumeTarget();
+    if (!r) {
+      resumeEl.innerHTML = '<div class="today-resume-empty">Open Daily Outreach to start the day.</div>';
+    } else {
+      const when = r.dayOffset === 0 ? 'today' : 'yesterday';
+      const dom = (r.domain || 'unknown').replace(/^https?:\/\//, '').split('/')[0];
+      const em = r.email || '—';
+      const link = document.createElement('span');
+      link.className = 'today-resume-link';
+      link.textContent = `${dom} · ${em}`;
+      link.addEventListener('click', () => {
+        cur = r.dayIdx;
+        if (typeof window._switchPage === 'function') window._switchPage('tracker');
+        render();
+        setTimeout(() => { if (typeof openDraftPanel === 'function') openDraftPanel(r.ci, r.xi); }, 80);
+      });
+      const label = r.kind === 'draft' ? `Last draft ${when}: ` : `Last added ${when}: `;
+      resumeEl.innerHTML = label;
+      resumeEl.appendChild(link);
+    }
+  }
+  const leftEl = document.getElementById('todayLeftovers');
+  if (leftEl) {
+    const lo = yesterdayLeftovers();
+    if (lo > 0) {
+      leftEl.innerHTML = '';
+      const chip = document.createElement('span');
+      chip.className = 'today-leftovers-chip';
+      chip.textContent = `${lo} contact${lo===1?'':'s'} from yesterday without a draft →`;
+      chip.addEventListener('click', () => {
+        cur = ti - 1;
+        if (typeof window._switchPage === 'function') window._switchPage('tracker');
+        render();
+      });
+      leftEl.appendChild(chip);
+    } else {
+      leftEl.innerHTML = '';
+    }
+  }
+  const jump = document.getElementById('todayJumpBtn');
+  if (jump && !jump._wired) {
+    jump._wired = true;
+    jump.addEventListener('click', () => {
+      cur = ti;
+      if (typeof window._switchPage === 'function') window._switchPage('tracker');
+      render();
+    });
+  }
+}
+
+/* ── Cross-day duplicate index ──
+   Scans D.d[*] each render and builds a map keyed by lower-cased contact email
+   and by company domain, recording the EARLIEST date the value was seen. A row
+   on a later day is flagged as a duplicate. Pure local computation; no API. */
+let _dupIndex = { emails: {}, domains: {}, builtAt: 0 };
+function buildDupIndex() {
+  const em = {}, dm = {};
+  const keys = Object.keys(D.d || {}).sort(); // YYYY-MM-DD sorts chronologically
+  keys.forEach(k => {
+    const dd = D.d[k];
+    if (!dd || !dd.companies) return;
+    dd.companies.forEach(co => {
+      const dom = (co.domain || '').toLowerCase().trim();
+      if (dom && !dm[dom]) dm[dom] = k;
+      (co.contacts || []).forEach(ct => {
+        const e = (ct.email || '').toLowerCase().trim();
+        if (e && !em[e]) em[e] = k;
+      });
+    });
+  });
+  _dupIndex = { emails: em, domains: dm, builtAt: Date.now() };
+}
+function dupSourceFor(kind, value, currentDateKey) {
+  const v = (value || '').toLowerCase().trim();
+  if (!v) return null;
+  const idx = kind === 'email' ? _dupIndex.emails : _dupIndex.domains;
+  const firstSeen = idx[v];
+  if (!firstSeen || firstSeen === currentDateKey) return null;
+  // Only flag if this row's date is AFTER the first-seen date.
+  if (currentDateKey > firstSeen) return firstSeen;
+  return null;
 }
 
 /* ── Company list ── */
@@ -2026,6 +2422,8 @@ function makeLogo(domain) {
 function renderCompanyList() {
   const root=document.getElementById('companyList'); root.innerHTML='';
   const dd=getDayData(cur);
+  const curKey=dateKey(cur);
+  buildDupIndex();
   if(dd.companies.length===0){
     const el=document.createElement('div'); el.className='co-empty'; el.textContent='No companies logged yet';
     root.appendChild(el); return;
@@ -2035,6 +2433,13 @@ function renderCompanyList() {
     const hdr=document.createElement('div'); hdr.className='co-header';
     const logo=makeLogo(co.domain);
     const name=document.createElement('div'); name.className='co-domain'; name.textContent=cleanDomain(co.domain)||'—';
+    const domDupSrc=dupSourceFor('domain',co.domain,curKey);
+    if(domDupSrc){
+      const dchip=document.createElement('span'); dchip.className='co-dup-chip';
+      dchip.textContent='also '+domDupSrc;
+      dchip.title='You already added this domain on '+domDupSrc;
+      name.appendChild(dchip);
+    }
     const cc=co.contacts.length;
     const count=document.createElement('div'); count.className='co-ct-count';
     count.textContent=cc+' contact'+(cc!==1?'s':'');
@@ -2078,6 +2483,13 @@ function renderCompanyList() {
           });
         });
         row.append(dot,email,role,copyIcon);
+        const emDupSrc=dupSourceFor('email',c.email,curKey);
+        if(emDupSrc){
+          const dchip=document.createElement('span'); dchip.className='ct-dup-chip';
+          dchip.textContent='emailed '+emDupSrc;
+          dchip.title='You already added this contact on '+emDupSrc;
+          row.appendChild(dchip);
+        }
         if(c.viewerDraft!==undefined&&c.viewerDraft!==c.draft){
           const b=document.createElement('span'); b.className='ct-review-badge'; b.textContent='reviewed';
           row.appendChild(b);
@@ -3794,7 +4206,7 @@ async function getMicrosoftToken(emailHint) {
    PAGE NAVIGATION
 ══════════════════════════════════════════════ */
 (function() {
-  const PAGE_IDS = ['tracker', 'contacts', 'email-accounts', 'find-companies', 'inbox', 'settings'];
+  const PAGE_IDS = ['today', 'tracker', 'contacts', 'email-accounts', 'find-companies', 'inbox', 'settings'];
 
   function switchPage(pageId) {
     PAGE_IDS.forEach(id => {
@@ -3804,6 +4216,7 @@ async function getMicrosoftToken(emailHint) {
     document.querySelectorAll('.sb-item[data-page]').forEach(item => {
       item.classList.toggle('sb-active', item.dataset.page === pageId);
     });
+    if (pageId === 'today') renderTodayPage();
     if (pageId === 'email-accounts') renderConnectedAccounts();
     if (pageId === 'contacts') renderContactsTable();
   }
