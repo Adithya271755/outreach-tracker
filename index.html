@@ -123,10 +123,15 @@ body.panel-open { margin-right: calc(var(--dp-w) + 16px); }
 .co-item { border-bottom:1px solid var(--b); animation:fadeup 0.18s ease; }
 .co-item:last-child { border-bottom:none; }
 @keyframes fadeup { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-.co-header { display:flex; align-items:center; gap:10px; padding:11px 0; cursor:pointer; user-select:none; }
+.co-header { display:flex; align-items:center; gap:10px; padding:9px 0; cursor:pointer; user-select:none; }
 .co-logo-wrap { width:26px; height:26px; border-radius:50%; flex-shrink:0; overflow:hidden; background:var(--s2); border:1px solid var(--b2); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:var(--m); text-transform:uppercase; }
 .co-logo { width:100%; height:100%; object-fit:cover; display:block; }
-.co-domain { flex:1; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* Hit-area extension: pad name top/bottom by 12px with negative margin
+   so the visible position is identical, but the hoverable rect covers the
+   full vertical range of a typical header. Prevents the cursor from
+   "falling off" the name into a dead gap during the panel expand
+   animation, which was the root cause of the open/close flicker. */
+.co-domain { flex:1; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:12px 0; margin:-12px 0; }
 .co-ct-count { font-size:10px; color:var(--m); background:var(--s2); padding:2px 8px; border-radius:99px; flex-shrink:0; }
 .co-arrow { background:none; border:none; color:var(--d); font-size:13px; cursor:pointer; padding:2px 4px; line-height:1; transition:transform 0.18s,color 0.12s; flex-shrink:0; }
 .co-arrow.open { transform:rotate(90deg); color:var(--m); }
@@ -141,6 +146,9 @@ body.panel-open { margin-right: calc(var(--dp-w) + 16px); }
   transition:grid-template-rows 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.24s ease;
 }
 .co-contacts.open { grid-template-rows:1fr; opacity:1; }
+/* The negative margin lifts the panel's hit zone up to overlap the
+   extended .co-domain hit zone — keeps the hover continuous. */
+.co-contacts { margin-top:-6px; padding-top:6px; }
 .co-contacts-inner { overflow:hidden; min-height:0; padding:0 0 12px 36px; }
 .ct-row { display:flex; align-items:center; gap:8px; padding:4px 0; }
 .ct-dot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
@@ -1002,7 +1010,7 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .today-ring-tgt { font-size:12px; color:#5a5a5a; margin-top:6px; letter-spacing:0.4px; }
 .today-ring-verdict { font-size:13px; color:#8a8a8a; margin-top:16px; text-align:center; }
 .today-stats-card { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
-.today-stat { padding:6px 4px; }
+.today-stat { padding:6px 4px; min-width:0; }
 .today-stat-num { font-size:36px; font-weight:300; color:#e5e5e5; letter-spacing:-0.8px; line-height:1; }
 .today-stat-lbl { font-size:11px; color:#8a8a8a; margin-top:8px; letter-spacing:0.4px; text-transform:uppercase; }
 .today-stat-sub { font-size:11px; color:#4a4a4a; margin-top:4px; }
@@ -1032,6 +1040,72 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .ct-dup-chip { display:inline-block; background:#1d0a0a; color:#d08585; border:1px solid #3a1818; padding:1px 7px; border-radius:10px; font-size:10px; margin-left:6px; cursor:default; }
 .ct-dup-chip:hover { background:#2a1010; }
 .co-dup-chip { display:inline-block; background:#1d1700; color:#d0a85c; border:1px solid #3a2c00; padding:1px 7px; border-radius:10px; font-size:10px; margin-left:6px; cursor:default; }
+
+/* ══ AI Studio page ══ */
+.ai-demo-pill { margin-left:auto; font-size:10px; color:#d0a85c; background:rgba(208,168,92,0.1); border:1px solid rgba(208,168,92,0.3); padding:3px 10px; border-radius:99px; letter-spacing:0.4px; text-transform:uppercase; }
+.ai-wrap { padding:8px 0 60px; }
+.ai-intro { margin:24px 0 28px; }
+.ai-intro-title { font-size:28px; font-weight:300; letter-spacing:-0.5px; color:#cfcfcf; }
+.ai-intro-sub { font-size:13px; color:#7a7a7a; margin-top:8px; max-width:640px; line-height:1.5; }
+.ai-grid { display:grid; grid-template-columns: minmax(280px, 5fr) minmax(320px, 7fr); gap:16px; align-items:start; }
+.ai-card { background:#0f0f0f; border:1px solid #1a1a1a; border-radius:12px; padding:20px; }
+.ai-card-title { font-size:11px; color:#5a5a5a; letter-spacing:0.6px; text-transform:uppercase; margin-bottom:14px; }
+.ai-card-sub { color:#3a3a3a; font-weight:400; }
+.ai-label { display:block; font-size:11px; color:#7a7a7a; margin:14px 0 6px; letter-spacing:0.3px; }
+.ai-label-hint { color:#4a4a4a; font-weight:300; margin-left:6px; }
+.ai-textarea { width:100%; box-sizing:border-box; background:#0a0a0a; border:1px solid #1f1f1f; color:#cfcfcf; font-size:12px; font-family:inherit; padding:9px 11px; border-radius:7px; resize:vertical; outline:none; line-height:1.5; transition:border-color 0.15s; }
+.ai-textarea:focus { border-color:#2f2f2f; }
+.ai-textarea::placeholder { color:#3a3a3a; }
+.ai-textarea-big { min-height:130px; }
+.ai-angle-row { display:flex; gap:6px; flex-wrap:wrap; }
+.ai-angle-btn { background:#0a0a0a; color:#7a7a7a; border:1px solid #1f1f1f; padding:6px 12px; border-radius:6px; font-size:11px; cursor:pointer; font-family:inherit; transition:all 0.12s; }
+.ai-angle-btn:hover { color:#cfcfcf; border-color:#2f2f2f; }
+.ai-angle-btn.ai-angle-active { background:#1d1d1d; color:#e5e5e5; border-color:#3a3a3a; }
+.ai-gen-btn { margin-top:18px; width:100%; background:#cfcfcf; color:#0a0a0a; border:none; padding:11px 18px; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; transition:background 0.15s; }
+.ai-gen-btn:hover { background:#fff; }
+.ai-notice { margin-top:12px; font-size:11px; color:#4a4a4a; text-align:center; }
+.ai-drafts { display:flex; flex-direction:column; gap:14px; min-height:200px; }
+.ai-draft { background:#0a0a0a; border:1px solid #1f1f1f; border-radius:8px; padding:14px 16px; }
+.ai-draft-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.ai-draft-to { font-size:12px; color:#cfcfcf; font-weight:500; }
+.ai-draft-meta { font-size:10px; color:#5a5a5a; margin-left:auto; letter-spacing:0.3px; text-transform:uppercase; }
+.ai-draft-subject { font-size:12px; color:#8a8a8a; margin-bottom:8px; }
+.ai-draft-body { font-size:12px; color:#b0b0b0; line-height:1.6; white-space:pre-wrap; font-family:inherit; }
+.ai-draft-actions { display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid #1a1a1a; }
+.ai-draft-btn { background:transparent; color:#8a8a8a; border:1px solid #1f1f1f; padding:5px 11px; border-radius:5px; font-size:11px; cursor:pointer; font-family:inherit; transition:all 0.12s; }
+.ai-draft-btn:hover { color:#cfcfcf; border-color:#2f2f2f; }
+.ai-draft-btn.ai-draft-btn-primary { color:#7dc984; border-color:rgba(125,201,132,0.3); background:rgba(125,201,132,0.08); }
+.ai-draft-btn.ai-draft-btn-primary:hover { background:rgba(125,201,132,0.15); }
+.ai-drafts-empty { font-size:12px; color:#5a5a5a; padding:40px 20px; text-align:center; border:1px dashed #1f1f1f; border-radius:8px; }
+@media (max-width:760px) { .ai-grid { grid-template-columns:1fr; } }
+
+/* ══ Contacted / Replied indicators (driven by mailbox scan) ══
+   Indicators live on the COMPANY row, not the contact row.
+   - contacted: small green chip next to the "N contacts" count
+   - replied: same chip + a soft green box around the whole company card */
+.co-ct-stack { display:flex; flex-direction:column; align-items:stretch; gap:3px; min-width:72px; }
+.co-ct-stack .co-ct-count { text-align:center; box-sizing:border-box; }
+.co-status-chip { display:inline-flex; align-items:center; justify-content:center; height:16px; padding:0 8px; border-radius:99px; font-size:9px; font-weight:500; letter-spacing:0.2px; flex-shrink:0; cursor:default; box-sizing:border-box; }
+.co-status-chip.co-status-contacted { color:#7dc984; background:rgba(125,201,132,0.08); border:1px solid rgba(125,201,132,0.25); }
+.co-status-chip.co-status-replied   { color:#7dc984; background:rgba(125,201,132,0.14); border:1px solid rgba(125,201,132,0.4); }
+.co-item.co-item-replied { background:rgba(125,201,132,0.04); border:1px solid rgba(125,201,132,0.32); border-radius:10px; padding:2px 8px; box-shadow:0 0 0 3px rgba(125,201,132,0.05); }
+.co-item.co-item-replied .co-header { padding-left:0; padding-right:0; }
+.ct-scan-badge { display:inline-flex; align-items:center; gap:6px; font-size:10px; color:#5a5a5a; margin-left:12px; text-transform:none; letter-spacing:0; }
+.ct-scan-badge.scanning { color:#7dc984; }
+.ct-scan-badge .ct-scan-dot { width:6px; height:6px; border-radius:50%; background:#3a3a3a; }
+.ct-scan-badge.scanning .ct-scan-dot { background:#7dc984; animation:pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity:0.35; } 50% { opacity:1; } }
+
+/* ══ Outcome chip on contact rows ══
+   Click cycles forward through outcome states.
+   Shift-click cycles back. Tooltip on hover shows full name + date. */
+.ct-outcome { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:18px; padding:0 6px; border-radius:10px; font-size:10px; font-weight:600; letter-spacing:0.3px; cursor:pointer; user-select:none; flex-shrink:0; background:#161616; color:#3a3a3a; border:1px solid #1f1f1f; transition:background 0.15s, color 0.15s, border-color 0.15s; }
+.ct-outcome:hover { background:#1d1d1d; border-color:#2a2a2a; }
+.ct-outcome.o-interested { background:rgba(125,201,132,0.12); color:#7dc984; border-color:rgba(125,201,132,0.3); }
+.ct-outcome.o-not-now    { background:rgba(208,168,92,0.12);  color:#d0a85c; border-color:rgba(208,168,92,0.3); }
+.ct-outcome.o-wrong      { background:rgba(150,150,150,0.10); color:#9a9a9a; border-color:rgba(150,150,150,0.25); }
+.ct-outcome.o-replied    { background:rgba(125,165,225,0.12); color:#7da5e1; border-color:rgba(125,165,225,0.3); }
+.ct-outcome.o-bounced    { background:rgba(208,133,133,0.12); color:#d08585; border-color:rgba(208,133,133,0.3); }
 
 /* ══ Inbox page ══ */
 #page-inbox {
@@ -1494,6 +1568,16 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
         </div>
         <span class="sb-label">Find Companies</span>
       </div>
+      <div class="sb-item" data-page="ai-studio" id="sbAiStudio">
+        <div class="sb-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/>
+            <path d="M5 18l.7 2L7.5 21l-1.8.8L5 24l-.7-2.2L2.5 21l1.8-1L5 18z" opacity="0.7"/>
+            <path d="M19 14l.5 1.5L21 16l-1.5.5L19 18l-.5-1.5L17 16l1.5-.5L19 14z" opacity="0.7"/>
+          </svg>
+        </div>
+        <span class="sb-label">AI Studio</span>
+      </div>
     </div>
   </div>
 
@@ -1560,7 +1644,7 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
       <div class="today-stat">
         <div class="today-stat-num" id="todayBestNum">0</div>
         <div class="today-stat-lbl">Best day (14d)</div>
-        <div class="today-stat-sub" id="todayBestSub">—</div>
+        <div class="today-stat-sub" id="todayBestSub">.</div>
       </div>
     </div>
 
@@ -1793,6 +1877,53 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 <div class="ea-empty">Coming soon.</div>
 
 </div><!-- /page-find-companies -->
+
+<!-- ══ Page: AI Studio ══ -->
+<div class="page" id="page-ai-studio">
+
+<div class="topbar">
+  <div class="brand">AI Studio</div>
+  <div class="ai-demo-pill">Demo mode</div>
+</div>
+
+<div class="ai-wrap">
+  <div class="ai-intro">
+    <div class="ai-intro-title">Personalized cold emails in seconds.</div>
+    <div class="ai-intro-sub">Paste contacts. Get a research-backed draft for each one, written in your voice. Stop tab-juggling Apollo, LinkedIn, and ChatGPT.</div>
+  </div>
+
+  <div class="ai-grid">
+    <div class="ai-card ai-input-card">
+      <div class="ai-card-title">Input</div>
+
+      <label class="ai-label">Your offer in one line</label>
+      <textarea id="aiOffer" class="ai-textarea" rows="2" placeholder="We help B2B SaaS founders book 12+ qualified sales meetings a month via cold outbound."></textarea>
+
+      <label class="ai-label">Target contacts <span class="ai-label-hint">one per line: email, company domain, role</span></label>
+      <textarea id="aiContacts" class="ai-textarea ai-textarea-big" rows="6" placeholder="sarah@stripe.com, stripe.com, VP Sales
+mike@linear.app, linear.app, Head of Growth
+priya@notion.so, notion.so, Founder"></textarea>
+
+      <label class="ai-label">Angle</label>
+      <div class="ai-angle-row">
+        <button class="ai-angle-btn ai-angle-active" data-angle="proof">Proof-led</button>
+        <button class="ai-angle-btn" data-angle="curiosity">Curiosity</button>
+        <button class="ai-angle-btn" data-angle="pain">Pain point</button>
+        <button class="ai-angle-btn" data-angle="referral">Mutual</button>
+      </div>
+
+      <button id="aiGenBtn" class="ai-gen-btn">Generate drafts →</button>
+      <div class="ai-notice">Demo shows sample output. Connect an LLM API key to generate live drafts on real contacts.</div>
+    </div>
+
+    <div class="ai-card ai-output-card">
+      <div class="ai-card-title">Drafts <span class="ai-card-sub" id="aiDraftCount"></span></div>
+      <div id="aiDrafts" class="ai-drafts"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page-ai-studio -->
 
 <!-- ══ Page: Inbox ══ -->
 <div class="page" id="page-inbox">
@@ -2135,7 +2266,15 @@ function render() {
   if(n>t) meta+=`  ·  +${n-t} over target`;
   else if(n>0&&n<t&&s.bc==='b-miss') meta+=`  ·  ${t-n} short`;
   document.getElementById('barMeta').textContent=meta;
-  document.getElementById('coLabel').textContent='Companies reached out'+(n>0?` (${n})`:'');
+  const coLabelEl=document.getElementById('coLabel');
+  coLabelEl.textContent='Companies reached out'+(n>0?` (${n})`:'');
+  // Render or update the scan badge inline next to the label
+  let scanEl=document.getElementById('ctScanBadge');
+  if(!scanEl){
+    scanEl=document.createElement('span'); scanEl.id='ctScanBadge'; scanEl.className='ct-scan-badge';
+    coLabelEl.appendChild(scanEl);
+  }
+  updateScanBadge();
   document.getElementById('addBtn').style.display=isReadOnly?'none':'';
   renderCompanyList();
   renderGrid();
@@ -2168,12 +2307,9 @@ function pickGreeting() {
   return 'Up late';
 }
 function findResumeTarget() {
-  // Returns the most useful "where was I" pointer for today or yesterday.
-  // Priority: latest contact WITH a draft (kind:'draft') beats the latest
-  // contact without one (kind:'contact'). If neither exists, returns null
-  // and the panel falls back to its initial empty state.
+  // Returns the latest contact WITH a non-empty draft from today or yesterday.
+  // Returns null when no drafts exist — the panel falls back to its empty state.
   const ti = todayIdx();
-  let fallback = null;
   for (let off = 0; off <= 1; off++) {
     const dd = D.d[dateKey(ti - off)];
     if (!dd || !dd.companies) continue;
@@ -2185,13 +2321,10 @@ function findResumeTarget() {
         if (ct.draft && ct.draft.trim()) {
           return { kind:'draft', dayOffset: off, dayIdx: ti - off, ci, xi, domain: co.domain, email: ct.email };
         }
-        if (!fallback) {
-          fallback = { kind:'contact', dayOffset: off, dayIdx: ti - off, ci, xi, domain: co.domain, email: ct.email };
-        }
       }
     }
   }
-  return fallback;
+  return null;
 }
 function yesterdayLeftovers() {
   const ti = todayIdx();
@@ -2292,6 +2425,7 @@ function renderTodayPage() {
     }
   }
 
+
   // Sparkline (14 days)
   const spark = document.getElementById('todaySpark');
   if (spark) {
@@ -2343,29 +2477,12 @@ function renderTodayPage() {
         render();
         setTimeout(() => { if (typeof openDraftPanel === 'function') openDraftPanel(r.ci, r.xi); }, 80);
       });
-      const label = r.kind === 'draft' ? `Last draft ${when}: ` : `Last added ${when}: `;
-      resumeEl.innerHTML = label;
+      resumeEl.innerHTML = `Last draft ${when}: `;
       resumeEl.appendChild(link);
     }
   }
   const leftEl = document.getElementById('todayLeftovers');
-  if (leftEl) {
-    const lo = yesterdayLeftovers();
-    if (lo > 0) {
-      leftEl.innerHTML = '';
-      const chip = document.createElement('span');
-      chip.className = 'today-leftovers-chip';
-      chip.textContent = `${lo} contact${lo===1?'':'s'} from yesterday without a draft →`;
-      chip.addEventListener('click', () => {
-        cur = ti - 1;
-        if (typeof window._switchPage === 'function') window._switchPage('tracker');
-        render();
-      });
-      leftEl.appendChild(chip);
-    } else {
-      leftEl.innerHTML = '';
-    }
-  }
+  if (leftEl) leftEl.innerHTML = '';
   const jump = document.getElementById('todayJumpBtn');
   if (jump && !jump._wired) {
     jump._wired = true;
@@ -2375,6 +2492,351 @@ function renderTodayPage() {
       render();
     });
   }
+}
+
+/* ── AI Studio ──
+   "Face of it" implementation. Generates demo personalized drafts client-side
+   from a template + variable interpolation, so Adithya can react to the shape
+   before we wire a real LLM API. To go live, replace generateMockDraft() with
+   an LLM call (Gemini / OpenAI / Anthropic) and pull through the angle + offer
+   + contact context as the system prompt. */
+let _aiAngle = 'proof';
+let _aiInit = false;
+function initAiStudio() {
+  if (_aiInit) return;
+  _aiInit = true;
+  document.querySelectorAll('.ai-angle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _aiAngle = btn.dataset.angle;
+      document.querySelectorAll('.ai-angle-btn').forEach(b => b.classList.toggle('ai-angle-active', b === btn));
+    });
+  });
+  document.getElementById('aiGenBtn').addEventListener('click', runAiGenerate);
+  // Seed an initial sample so the user sees what output looks like.
+  renderAiDrafts([
+    sampleDraft('sarah@stripe.com', 'stripe.com', 'VP Sales', 'proof'),
+    sampleDraft('mike@linear.app',  'linear.app',  'Head of Growth', 'proof')
+  ], true);
+}
+function parseAiContacts(raw) {
+  return raw.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+    const parts = line.split(',').map(s => s.trim()).filter(Boolean);
+    return { email: parts[0] || '', domain: parts[1] || '', role: parts[2] || '' };
+  }).filter(c => c.email);
+}
+function runAiGenerate() {
+  const offer = document.getElementById('aiOffer').value.trim() ||
+    'We help B2B SaaS founders book 12+ qualified sales meetings a month via cold outbound.';
+  const contacts = parseAiContacts(document.getElementById('aiContacts').value);
+  if (!contacts.length) {
+    renderAiDrafts([], false);
+    return;
+  }
+  const drafts = contacts.slice(0, 25).map(c => generateMockDraft(c, offer, _aiAngle));
+  renderAiDrafts(drafts, false);
+}
+function sampleDraft(email, domain, role, angle) {
+  return generateMockDraft(
+    { email, domain, role },
+    'We help B2B SaaS founders book 12+ qualified sales meetings a month via cold outbound.',
+    angle
+  );
+}
+function generateMockDraft(c, offer, angle) {
+  const firstName = (c.email.split('@')[0] || 'there').replace(/[._-]/g, ' ').split(' ')[0];
+  const name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  const co = (c.domain || c.email.split('@')[1] || 'your team').replace(/^https?:\/\//, '').split('/')[0];
+  const coName = co.split('.')[0].charAt(0).toUpperCase() + co.split('.')[0].slice(1);
+  const role = c.role || 'team';
+  const angleBlocks = {
+    proof: {
+      subject: `Quick idea for ${coName}`,
+      hook: `Saw ${coName} is hiring on the sales side. Usually means the outbound team is about to be stretched thin.`,
+      proof: `We just helped a Series B SaaS book 18 qualified demos in a month with one SDR on our system. Same shape as your team.`,
+      cta: `Worth 15 min to see if it's a fit?`
+    },
+    curiosity: {
+      subject: `${coName} outbound question`,
+      hook: `Quick one ${name}: how is ${coName} sourcing top-of-funnel right now? Inbound, paid, or outbound-led?`,
+      proof: `Asking because we run cold outbound for ${role.toLowerCase().includes('vp') || role.toLowerCase().includes('head') ? 'a few teams your size' : 'B2B SaaS like yours'} and the pattern in 2026 is interesting.`,
+      cta: `Open to a 15 min trade of notes?`
+    },
+    pain: {
+      subject: `Cold outbound at ${coName}`,
+      hook: `Most ${role || 'sales'} leaders I talk to say the same thing: their SDRs burn 60% of the day on list-building, not selling.`,
+      proof: `${offer}`,
+      cta: `If that maps to ${coName}, worth a quick call to compare notes?`
+    },
+    referral: {
+      subject: `Intro via the SaaS Founder Circle`,
+      hook: `${name}, your name came up in the SaaS Founder Circle when someone asked about outbound that actually works at <50 people.`,
+      proof: `${offer}`,
+      cta: `Worth 15 min to see if it lines up with where ${coName} is headed?`
+    }
+  };
+  const a = angleBlocks[angle] || angleBlocks.proof;
+  return {
+    to: c.email,
+    role: role,
+    domain: co,
+    subject: a.subject,
+    body: `Hi ${name},\n\n${a.hook}\n\n${a.proof}\n\n${a.cta}\n\n—Adithya`
+  };
+}
+function renderAiDrafts(drafts, isSample) {
+  const wrap = document.getElementById('aiDrafts');
+  const count = document.getElementById('aiDraftCount');
+  wrap.innerHTML = '';
+  if (!drafts.length) {
+    wrap.innerHTML = '<div class="ai-drafts-empty">Paste at least one contact in the input panel, then click Generate.</div>';
+    count.textContent = '';
+    return;
+  }
+  count.textContent = isSample ? '· sample preview' : `· ${drafts.length} generated`;
+  drafts.forEach((d, i) => {
+    const card = document.createElement('div'); card.className = 'ai-draft';
+    const head = document.createElement('div'); head.className = 'ai-draft-head';
+    const to = document.createElement('div'); to.className = 'ai-draft-to'; to.textContent = d.to;
+    const meta = document.createElement('div'); meta.className = 'ai-draft-meta'; meta.textContent = d.domain + (d.role ? ' · ' + d.role : '');
+    head.append(to, meta);
+    const subj = document.createElement('div'); subj.className = 'ai-draft-subject'; subj.textContent = 'Subject: ' + d.subject;
+    const body = document.createElement('div'); body.className = 'ai-draft-body'; body.textContent = d.body;
+    const actions = document.createElement('div'); actions.className = 'ai-draft-actions';
+    const saveBtn = document.createElement('button'); saveBtn.className = 'ai-draft-btn ai-draft-btn-primary'; saveBtn.textContent = 'Log to today';
+    saveBtn.addEventListener('click', () => saveAiDraftToToday(d, saveBtn));
+    const copyBtn = document.createElement('button'); copyBtn.className = 'ai-draft-btn'; copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => {
+      const txt = 'Subject: ' + d.subject + '\n\n' + d.body;
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => {
+        copyBtn.textContent = 'Copied'; setTimeout(() => copyBtn.textContent = 'Copy', 1200);
+      }).catch(() => {});
+    });
+    const regenBtn = document.createElement('button'); regenBtn.className = 'ai-draft-btn'; regenBtn.textContent = 'Regenerate';
+    regenBtn.addEventListener('click', () => {
+      const fresh = generateMockDraft({ email: d.to, domain: d.domain, role: d.role }, document.getElementById('aiOffer').value || '', _aiAngle);
+      drafts[i] = fresh; renderAiDrafts(drafts, false);
+    });
+    actions.append(saveBtn, copyBtn, regenBtn);
+    card.append(head, subj, body, actions);
+    wrap.appendChild(card);
+  });
+}
+function saveAiDraftToToday(d, btn) {
+  if (isReadOnly) return;
+  const dd = getDayData(todayIdx());
+  const domain = d.domain || (d.to.split('@')[1] || '');
+  let co = dd.companies.find(x => (x.domain || '').toLowerCase() === domain.toLowerCase());
+  if (!co) {
+    co = { id: 'ai_' + Date.now(), domain, contacts: [] };
+    dd.companies.push(co);
+  }
+  let ct = (co.contacts || []).find(x => (x.email || '').toLowerCase() === d.to.toLowerCase());
+  if (!ct) {
+    ct = { email: d.to, role: d.role || '', draft: '' };
+    co.contacts = co.contacts || [];
+    co.contacts.push(ct);
+  }
+  ct.draft = 'Subject: ' + d.subject + '\n\n' + d.body;
+  persist();
+  btn.textContent = 'Logged ✓';
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = 'Log to today'; btn.disabled = false; }, 1800);
+}
+
+/* ── Mailbox scanner ──
+   Scans connected Gmail/Outlook accounts for sent + received messages and
+   builds two sets of email addresses: who we've contacted (we sent to them)
+   and who has replied (we received from them). The contact rows then show
+   "contacted" chips and "replied" rings based on these sets.
+   Runs in the background on Daily Outreach page activation; results cache
+   in memory for 5 minutes. Safe to fail — chips just don't show. */
+let _mailScan = { contacted: new Set(), replied: new Set(), scannedAt: 0, scanning: false, lastError: null };
+let _mailScanInflight = null;
+const MAIL_SCAN_TTL = 5 * 60 * 1000;
+
+function getConnectedAccounts() {
+  try { return JSON.parse(localStorage.getItem('ot_email_accounts') || '[]'); }
+  catch(_) { return []; }
+}
+
+function extractEmails(s) {
+  const re = /<([^<>\s]+@[^<>\s]+)>|([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(s || ''))) {
+    const addr = (m[1] || m[2] || '').toLowerCase().trim();
+    if (addr) out.push(addr);
+  }
+  return out;
+}
+
+async function scanMailboxesIfNeeded(force) {
+  if (!force && Date.now() - _mailScan.scannedAt < MAIL_SCAN_TTL) return _mailScan;
+  if (_mailScanInflight) return _mailScanInflight;
+  _mailScan.scanning = true;
+  updateScanBadge();
+  _mailScanInflight = doScan().finally(() => {
+    _mailScanInflight = null;
+    _mailScan.scanning = false;
+    updateScanBadge();
+  });
+  return _mailScanInflight;
+}
+
+async function doScan() {
+  const accounts = getConnectedAccounts();
+  const contacted = new Set();
+  const replied = new Set();
+  let lastError = null;
+  for (const acc of accounts) {
+    try {
+      if (acc.provider === 'google') await scanGmail(acc, contacted, replied);
+      else if (acc.provider === 'microsoft') await scanOutlook(acc, contacted, replied);
+    } catch (err) {
+      lastError = String(err);
+      console.warn('[mailscan] failed for', acc.email, err);
+    }
+  }
+  _mailScan = { contacted, replied, scannedAt: Date.now(), scanning:false, lastError };
+  // Re-render the tracker so chips appear immediately.
+  if (document.getElementById('page-tracker')?.classList.contains('active')) {
+    renderCompanyList();
+  }
+  return _mailScan;
+}
+
+async function scanGmail(acc, contacted, replied) {
+  const auth = { Authorization: 'Bearer ' + acc.token };
+  await gmailHarvest('in:sent newer_than:90d', auth, msg => {
+    extractEmails(headerOf(msg, 'To')).forEach(e => contacted.add(e));
+    extractEmails(headerOf(msg, 'Cc')).forEach(e => contacted.add(e));
+  });
+  await gmailHarvest('in:inbox newer_than:90d', auth, msg => {
+    extractEmails(headerOf(msg, 'From')).forEach(e => replied.add(e));
+  });
+}
+
+function headerOf(msg, name) {
+  const hs = msg?.payload?.headers || [];
+  for (const h of hs) if (h.name && h.name.toLowerCase() === name.toLowerCase()) return h.value || '';
+  return '';
+}
+
+async function gmailHarvest(query, auth, perMsg) {
+  const list = await fetch(
+    'https://gmail.googleapis.com/gmail/v1/users/me/messages?q=' + encodeURIComponent(query) + '&maxResults=500',
+    { headers: auth }
+  ).then(r => r.ok ? r.json() : Promise.reject(new Error('Gmail list ' + r.status)));
+  if (!list.messages) return;
+  const chunkSize = 10;
+  for (let i = 0; i < list.messages.length; i += chunkSize) {
+    const batch = list.messages.slice(i, i + chunkSize);
+    const msgs = await Promise.all(batch.map(m =>
+      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=To&metadataHeaders=From&metadataHeaders=Cc`,
+        { headers: auth }).then(r => r.ok ? r.json() : null)
+    ));
+    msgs.forEach(m => { if (m) perMsg(m); });
+  }
+}
+
+async function scanOutlook(acc, contacted, replied) {
+  let token = acc.token;
+  try { if (typeof getMicrosoftToken === 'function') token = await getMicrosoftToken(acc.email); } catch(_) {}
+  const auth = { Authorization: 'Bearer ' + token };
+  // Sent items
+  const sent = await fetch(
+    'https://graph.microsoft.com/v1.0/me/mailFolders/sentitems/messages?$select=toRecipients,ccRecipients&$top=500',
+    { headers: auth }
+  ).then(r => r.ok ? r.json() : Promise.reject(new Error('Outlook sent ' + r.status)));
+  (sent.value || []).forEach(m => {
+    (m.toRecipients || []).forEach(r => { const a = (r.emailAddress?.address || '').toLowerCase(); if (a) contacted.add(a); });
+    (m.ccRecipients || []).forEach(r => { const a = (r.emailAddress?.address || '').toLowerCase(); if (a) contacted.add(a); });
+  });
+  // Inbox
+  const inbox = await fetch(
+    'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$select=from&$top=500',
+    { headers: auth }
+  ).then(r => r.ok ? r.json() : Promise.reject(new Error('Outlook inbox ' + r.status)));
+  (inbox.value || []).forEach(m => {
+    const a = (m.from?.emailAddress?.address || '').toLowerCase();
+    if (a) replied.add(a);
+  });
+}
+
+function updateScanBadge() {
+  const el = document.getElementById('ctScanBadge');
+  if (!el) return;
+  const accounts = getConnectedAccounts();
+  if (!accounts.length) {
+    el.innerHTML = '<span class="ct-scan-dot"></span><span>Connect a mailbox to track sent &amp; replies</span>';
+    el.classList.remove('scanning');
+    return;
+  }
+  if (_mailScan.scanning) {
+    el.innerHTML = '<span class="ct-scan-dot"></span><span>Scanning ' + accounts.length + ' mailbox' + (accounts.length>1?'es':'') + '…</span>';
+    el.classList.add('scanning');
+    return;
+  }
+  const c = _mailScan.contacted.size, r = _mailScan.replied.size;
+  if (_mailScan.lastError) {
+    el.innerHTML = '<span class="ct-scan-dot"></span><span>Scan failed. Reconnect mailbox.</span>';
+    el.classList.remove('scanning');
+    return;
+  }
+  if (!_mailScan.scannedAt) {
+    el.innerHTML = '<span class="ct-scan-dot"></span><span>Mailbox not yet scanned</span>';
+    el.classList.remove('scanning');
+    return;
+  }
+  el.innerHTML = '<span class="ct-scan-dot"></span><span>Scanned · ' + c + ' contacted · ' + r + ' replied</span>';
+  el.classList.remove('scanning');
+}
+
+/* ── Outcome chip helpers ──
+   States are an ordered ring. Click cycles forward; shift-click cycles back.
+   undefined === untagged (neutral grey dot). Backwards-compatible: contacts
+   without an outcome field render the same as legacy data. */
+const OUTCOME_RING = [undefined, 'interested', 'not_now', 'wrong_person', 'replied', 'bounced'];
+const OUTCOME_META = {
+  interested:   { glyph:'I', label:'Interested',   cls:'o-interested' },
+  not_now:      { glyph:'N', label:'Not now',      cls:'o-not-now' },
+  wrong_person: { glyph:'W', label:'Wrong person', cls:'o-wrong' },
+  replied:      { glyph:'R', label:'Replied',      cls:'o-replied' },
+  bounced:      { glyph:'B', label:'Bounced',      cls:'o-bounced' },
+};
+function nextOutcome(current, backward) {
+  const i = OUTCOME_RING.indexOf(current);
+  const idx = i < 0 ? 0 : i;
+  const len = OUTCOME_RING.length;
+  const nextIdx = backward ? (idx - 1 + len) % len : (idx + 1) % len;
+  return OUTCOME_RING[nextIdx];
+}
+function renderOutcomeChip(el, outcome, outcomeAt) {
+  el.className = 'ct-outcome';
+  if (!outcome || !OUTCOME_META[outcome]) {
+    el.textContent = '·';
+    el.title = 'Click to tag outcome. Shift-click to go back.';
+    return;
+  }
+  const m = OUTCOME_META[outcome];
+  el.classList.add(m.cls);
+  el.textContent = m.glyph;
+  const when = outcomeAt ? ' on ' + new Date(outcomeAt).toLocaleDateString([], { month:'short', day:'numeric' }) : '';
+  el.title = m.label + when + '. Click to advance. Shift-click to go back.';
+}
+function countOutcomesInRange(startIdx, endIdx) {
+  // Inclusive [startIdx, endIdx] day-index range. Returns { interested, not_now, wrong_person, replied, bounced }.
+  const out = { interested:0, not_now:0, wrong_person:0, replied:0, bounced:0 };
+  for (let i = startIdx; i <= endIdx; i++) {
+    const dd = D.d[dateKey(i)];
+    if (!dd || !dd.companies) continue;
+    dd.companies.forEach(co => {
+      (co.contacts || []).forEach(ct => {
+        if (ct.outcome && out.hasOwnProperty(ct.outcome)) out[ct.outcome]++;
+      });
+    });
+  }
+  return out;
 }
 
 /* ── Cross-day duplicate index ──
@@ -2443,6 +2905,27 @@ function renderCompanyList() {
     const cc=co.contacts.length;
     const count=document.createElement('div'); count.className='co-ct-count';
     count.textContent=cc+' contact'+(cc!==1?'s':'');
+    // Company-level mailbox-scan status: roll up across all contacts.
+    // replied (any) > contacted (any) > none. Replied also wraps the whole
+    // company card in a soft green box.
+    let coStatus = null;
+    for (const ct of co.contacts) {
+      const em = (ct.email || '').toLowerCase().trim();
+      if (!em) continue;
+      if (_mailScan.replied.has(em)) { coStatus = 'replied'; break; }
+      if (_mailScan.contacted.has(em)) coStatus = 'contacted';
+    }
+    const statusChip = document.createElement('span');
+    if (coStatus === 'replied') {
+      statusChip.className = 'co-status-chip co-status-replied';
+      statusChip.textContent = 'replied';
+      statusChip.title = 'A contact on this company replied to a thread you sent.';
+      item.classList.add('co-item-replied');
+    } else if (coStatus === 'contacted') {
+      statusChip.className = 'co-status-chip co-status-contacted';
+      statusChip.textContent = 'contacted';
+      statusChip.title = 'You have sent at least one email to a contact at this company.';
+    }
     const arrow=document.createElement('button'); arrow.className='co-arrow'; arrow.textContent='›';
     const edit=document.createElement('button'); edit.className='co-edit'; edit.textContent='✎'; edit.title='Edit company';
     edit.addEventListener('click',e=>{e.stopPropagation();if(!isReadOnly)openModal(idx);});
@@ -2493,15 +2976,18 @@ function renderCompanyList() {
         if(c.viewerDraft!==undefined&&c.viewerDraft!==c.draft){
           const b=document.createElement('span'); b.className='ct-review-badge'; b.textContent='reviewed';
           row.appendChild(b);
-        } else if(c.draft&&c.draft.trim()){
-          const b=document.createElement('span'); b.className='ct-draft-badge'; b.textContent='draft';
-          row.appendChild(b);
         }
         inner.appendChild(row);
       });
     }
-    if(!isReadOnly) hdr.append(logo,name,count,arrow,edit,del);
-    else            hdr.append(logo,name,count,arrow);
+    // Stack the contact count and (optional) status chip vertically on the
+    // right side of the company row, so the chip sits BELOW the "N contacts"
+    // text instead of next to it.
+    const countStack = document.createElement('div'); countStack.className = 'co-ct-stack';
+    countStack.appendChild(count);
+    if (coStatus) countStack.appendChild(statusChip);
+    if(!isReadOnly) hdr.append(logo,name,countStack,arrow,edit,del);
+    else            hdr.append(logo,name,countStack,arrow);
 
     // Hover-to-preview: linger over the company name (or its expanded
     // contacts) for a beat and the panel opens; a click pins it open until
@@ -4206,7 +4692,7 @@ async function getMicrosoftToken(emailHint) {
    PAGE NAVIGATION
 ══════════════════════════════════════════════ */
 (function() {
-  const PAGE_IDS = ['today', 'tracker', 'contacts', 'email-accounts', 'find-companies', 'inbox', 'settings'];
+  const PAGE_IDS = ['today', 'tracker', 'contacts', 'email-accounts', 'find-companies', 'ai-studio', 'inbox', 'settings'];
 
   function switchPage(pageId) {
     PAGE_IDS.forEach(id => {
@@ -4219,6 +4705,11 @@ async function getMicrosoftToken(emailHint) {
     if (pageId === 'today') renderTodayPage();
     if (pageId === 'email-accounts') renderConnectedAccounts();
     if (pageId === 'contacts') renderContactsTable();
+    if (pageId === 'ai-studio') initAiStudio();
+    if (pageId === 'tracker') {
+      // Kick off the mailbox scan in the background; renderCompanyList re-runs when it completes.
+      try { scanMailboxesIfNeeded(); } catch(_){}
+    }
   }
 
   document.querySelectorAll('.sb-item[data-page]').forEach(item => {
