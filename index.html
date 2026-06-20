@@ -1106,6 +1106,8 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
 .ct-outcome.o-wrong      { background:rgba(150,150,150,0.10); color:#9a9a9a; border-color:rgba(150,150,150,0.25); }
 .ct-outcome.o-replied    { background:rgba(125,165,225,0.12); color:#7da5e1; border-color:rgba(125,165,225,0.3); }
 .ct-outcome.o-bounced    { background:rgba(208,133,133,0.12); color:#d08585; border-color:rgba(208,133,133,0.3); }
+.ct-email.ct-email-contacted { color:#7dc984; }
+.ct-email.ct-email-replied   { color:#7dc984; opacity:0.8; }
 
 /* ══ Inbox page ══ */
 #page-inbox {
@@ -2214,8 +2216,8 @@ function statusOf(i,n) {
 }
 
 /* ── Navigation ── */
-function goPrevDay()   { if(cur<=JAN1_IDX)return; cur--; render(); }
-function goNextDay()   { cur++; render(); }
+function goPrevDay()   { if(cur<=JAN1_IDX)return; cur--; render(); priorityScanVisible().catch(()=>{}); }
+function goNextDay()   { cur++; render(); priorityScanVisible().catch(()=>{}); }
 function goPrevMonth() {
   const d=curDate(),fm=new Date(d.getFullYear(),d.getMonth()-1,1);
   if(fm.getFullYear()<2026||(fm.getFullYear()===2026&&fm.getMonth()<0))return;
@@ -2272,6 +2274,11 @@ function render() {
   let scanEl=document.getElementById('ctScanBadge');
   if(!scanEl){
     scanEl=document.createElement('span'); scanEl.id='ctScanBadge'; scanEl.className='ct-scan-badge';
+    scanEl.title = 'Click to rescan connected mailboxes';
+    scanEl.addEventListener('click', e => {
+      e.stopPropagation();
+      try { scanMailboxesIfNeeded(true); } catch(_) {}
+    });
     coLabelEl.appendChild(scanEl);
   }
   updateScanBadge();
@@ -2652,6 +2659,7 @@ function saveAiDraftToToday(d, btn) {
    in memory for 5 minutes. Safe to fail — chips just don't show. */
 let _mailScan = { contacted: new Set(), replied: new Set(), scannedAt: 0, scanning: false, lastError: null };
 let _mailScanInflight = null;
+let _priorityScanRunning = false;
 const MAIL_SCAN_TTL = 5 * 60 * 1000;
 
 function getConnectedAccounts() {
@@ -2670,11 +2678,91 @@ function extractEmails(s) {
   return out;
 }
 
+function addContactedFromHeaders(msg, contacted, excludeEmails) {
+  extractEmails(headerOf(msg, 'To'))
+    .concat(extractEmails(headerOf(msg, 'Cc')))
+    .forEach(e => {
+      if (!excludeEmails?.has(e)) contacted.add(e);
+    });
+}
+
+function accountEmailSet(accounts) {
+  const emails = new Set();
+  accounts.forEach(acc => {
+    const email = (acc.email || '').toLowerCase().trim();
+    if (email) emails.add(email);
+  });
+  try {
+    const loginEmail = (localStorage.getItem('ot_user_email') || '').toLowerCase().trim();
+    if (loginEmail) emails.add(loginEmail);
+  } catch(_) {}
+  return emails;
+}
+
+function allTrackedContactEmails(excludeEmails) {
+  const emails = new Set();
+  Object.values(D.d || {}).forEach(day => {
+    (day?.companies || []).forEach(co => {
+      (co.contacts || []).forEach(ct => {
+        const email = (ct.email || '').toLowerCase().trim();
+        if (email && !excludeEmails?.has(email)) emails.add(email);
+      });
+    });
+  });
+  return emails;
+}
+
+async function priorityScanVisible() {
+  if (_priorityScanRunning) return;
+  const accounts = getConnectedAccounts();
+  const googleAcc = accounts.find(a => a.provider === 'google');
+  if (!googleAcc) return;
+  const excludeEmails = accountEmailSet(accounts);
+  const dd = getDayData(cur);
+  if (!dd || !dd.companies.length) return;
+
+  // Collect visible contact emails in top-to-bottom display order, skip already known.
+  const visible = [];
+  dd.companies.forEach(co => {
+    (co.contacts || []).forEach(ct => {
+      const em = (ct.email || '').toLowerCase().trim();
+      if (em && !excludeEmails.has(em) && !_mailScan.contacted.has(em) && !_mailScan.replied.has(em)) {
+        visible.push(em);
+      }
+    });
+  });
+  if (!visible.length) return;
+
+  _priorityScanRunning = true;
+  const auth = { Authorization: 'Bearer ' + googleAcc.token };
+
+  // Fire ALL searches simultaneously (parallel = fastest), then reveal top-to-bottom.
+  const searches = visible.map(em => Promise.all([
+    gmailHasSearchHit(auth, 'to:' + em + ' OR cc:' + em + ' newer_than:180d').catch(() => false),
+    gmailHasSearchHit(auth, 'in:inbox from:' + em + ' newer_than:180d').catch(() => false),
+  ]));
+
+  let anyUpdate = false;
+  for (let i = 0; i < searches.length; i++) {
+    const [toHit, fromHit] = await searches[i]; // awaited in order for top-to-bottom reveal
+    if (fromHit) { _mailScan.replied.add(visible[i]); _mailScan.contacted.add(visible[i]); anyUpdate = true; }
+    else if (toHit) { _mailScan.contacted.add(visible[i]); anyUpdate = true; }
+    if (anyUpdate && document.getElementById('page-tracker')?.classList.contains('active')) {
+      renderCompanyList();
+      anyUpdate = false;
+    }
+  }
+  _priorityScanRunning = false;
+}
+
 async function scanMailboxesIfNeeded(force) {
   if (!force && Date.now() - _mailScan.scannedAt < MAIL_SCAN_TTL) return _mailScan;
   if (_mailScanInflight) return _mailScanInflight;
   _mailScan.scanning = true;
   updateScanBadge();
+  // Priority scan: fast parallel lookup for visible contacts only.
+  // Runs concurrently with the full scan so chips appear in ~500ms.
+  priorityScanVisible().catch(() => {});
   _mailScanInflight = doScan().finally(() => {
     _mailScanInflight = null;
     _mailScan.scanning = false;
@@ -2685,13 +2773,16 @@ async function scanMailboxesIfNeeded(force) {
 
 async function doScan() {
   const accounts = getConnectedAccounts();
-  const contacted = new Set();
-  const replied = new Set();
+  const excludeEmails = accountEmailSet(accounts);
+  const trackedEmails = allTrackedContactEmails(excludeEmails);
+  // Seed from any results the priority scan already found so they survive this replace.
+  const contacted = new Set(_mailScan.contacted);
+  const replied = new Set(_mailScan.replied);
   let lastError = null;
   for (const acc of accounts) {
     try {
-      if (acc.provider === 'google') await scanGmail(acc, contacted, replied);
-      else if (acc.provider === 'microsoft') await scanOutlook(acc, contacted, replied);
+      if (acc.provider === 'google') await scanGmail(acc, contacted, replied, excludeEmails, trackedEmails);
+      else if (acc.provider === 'microsoft') await scanOutlook(acc, contacted, replied, excludeEmails);
     } catch (err) {
       lastError = String(err);
       console.warn('[mailscan] failed for', acc.email, err);
@@ -2705,15 +2796,18 @@ async function doScan() {
   return _mailScan;
 }
 
-async function scanGmail(acc, contacted, replied) {
+async function scanGmail(acc, contacted, replied, excludeEmails, trackedEmails) {
   const auth = { Authorization: 'Bearer ' + acc.token };
   await gmailHarvest('in:sent newer_than:90d', auth, msg => {
-    extractEmails(headerOf(msg, 'To')).forEach(e => contacted.add(e));
-    extractEmails(headerOf(msg, 'Cc')).forEach(e => contacted.add(e));
+    addContactedFromHeaders(msg, contacted, excludeEmails);
   });
   await gmailHarvest('in:inbox newer_than:90d', auth, msg => {
     extractEmails(headerOf(msg, 'From')).forEach(e => replied.add(e));
+    // Covers the "primary inbox was CC'd on outbound" workflow. If a
+    // connected mailbox can see the sent copy, the lead in To/Cc counts as contacted.
+    addContactedFromHeaders(msg, contacted, excludeEmails);
   });
+  await gmailSearchTrackedContacts(auth, contacted, trackedEmails);
 }
 
 function headerOf(msg, name) {
@@ -2739,7 +2833,46 @@ async function gmailHarvest(query, auth, perMsg) {
   }
 }
 
-async function scanOutlook(acc, contacted, replied) {
+async function gmailSearchTrackedContacts(auth, contacted, trackedEmails) {
+  const remaining = Array.from(trackedEmails || []).filter(email => !contacted.has(email));
+  const chunkSize = 6;
+  for (let i = 0; i < remaining.length; i += chunkSize) {
+    const batch = remaining.slice(i, i + chunkSize);
+    await Promise.all(batch.map(async email => {
+      if (await gmailHasSearchHit(auth, email + ' newer_than:180d')) {
+        contacted.add(email);
+        return;
+      }
+      if (await gmailHasSearchHit(auth, 'to:' + email + ' OR cc:' + email + ' newer_than:180d')) {
+        contacted.add(email);
+      }
+    }));
+  }
+}
+
+async function gmailHasSearchHit(auth, query) {
+  const url = 'https://gmail.googleapis.com/gmail/v1/users/me/messages?q=' +
+    encodeURIComponent(query) + '&maxResults=1';
+  const res = await fetch(url, { headers: auth });
+  if (!res.ok) throw new Error('Gmail contact search ' + res.status);
+  const data = await res.json();
+  return !!(data.messages && data.messages.length);
+}
+
+window.otDebugMailScan = function(email) {
+  const key = (email || '').toLowerCase().trim();
+  return {
+    scannedAt: _mailScan.scannedAt,
+    scanning: _mailScan.scanning,
+    lastError: _mailScan.lastError,
+    contactedCount: _mailScan.contacted.size,
+    repliedCount: _mailScan.replied.size,
+    contacted: key ? _mailScan.contacted.has(key) : null,
+    replied: key ? _mailScan.replied.has(key) : null
+  };
+};
+
+async function scanOutlook(acc, contacted, replied, excludeEmails) {
   let token = acc.token;
   try { if (typeof getMicrosoftToken === 'function') token = await getMicrosoftToken(acc.email); } catch(_) {}
   const auth = { Authorization: 'Bearer ' + token };
@@ -2749,8 +2882,8 @@ async function scanOutlook(acc, contacted, replied) {
     { headers: auth }
   ).then(r => r.ok ? r.json() : Promise.reject(new Error('Outlook sent ' + r.status)));
   (sent.value || []).forEach(m => {
-    (m.toRecipients || []).forEach(r => { const a = (r.emailAddress?.address || '').toLowerCase(); if (a) contacted.add(a); });
-    (m.ccRecipients || []).forEach(r => { const a = (r.emailAddress?.address || '').toLowerCase(); if (a) contacted.add(a); });
+    (m.toRecipients || []).forEach(r => { const a = (r.emailAddress?.address || '').toLowerCase(); if (a && !excludeEmails?.has(a)) contacted.add(a); });
+    (m.ccRecipients || []).forEach(r => { const a = (r.emailAddress?.address || '').toLowerCase(); if (a && !excludeEmails?.has(a)) contacted.add(a); });
   });
   // Inbox
   const inbox = await fetch(
@@ -2965,6 +3098,9 @@ function renderCompanyList() {
             copyIcon.textContent='✓'; setTimeout(()=>{ copyIcon.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'; },1200);
           });
         });
+        const em2 = (c.email||'').toLowerCase().trim();
+        if (_mailScan.replied.has(em2)) email.classList.add('ct-email-contacted','ct-email-replied');
+        else if (_mailScan.contacted.has(em2)) email.classList.add('ct-email-contacted');
         row.append(dot,email,role,copyIcon);
         const emDupSrc=dupSourceFor('email',c.email,curKey);
         if(emDupSrc){
