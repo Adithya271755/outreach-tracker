@@ -3038,15 +3038,15 @@ function renderCompanyList() {
     const cc=co.contacts.length;
     const count=document.createElement('div'); count.className='co-ct-count';
     count.textContent=cc+' contact'+(cc!==1?'s':'');
-    // Company-level mailbox-scan status: roll up across all contacts.
-    // replied (any) > contacted (any) > none. Replied also wraps the whole
-    // company card in a soft green box.
-    let coStatus = null;
+    // Company-level status: past-day entries always show contacted (sent from any client).
+    // Today's entries rely on mailbox scan. Replied (scan only) overrides contacted.
+    const isPastDay = curKey < dateKey(todayIdx());
+    let coStatus = isPastDay ? 'contacted' : null;
     for (const ct of co.contacts) {
       const em = (ct.email || '').toLowerCase().trim();
       if (!em) continue;
       if (_mailScan.replied.has(em)) { coStatus = 'replied'; break; }
-      if (_mailScan.contacted.has(em)) coStatus = 'contacted';
+      if (!isPastDay && _mailScan.contacted.has(em)) coStatus = 'contacted';
     }
     const statusChip = document.createElement('span');
     if (coStatus === 'replied') {
@@ -3100,7 +3100,7 @@ function renderCompanyList() {
         });
         const em2 = (c.email||'').toLowerCase().trim();
         if (_mailScan.replied.has(em2)) email.classList.add('ct-email-contacted','ct-email-replied');
-        else if (_mailScan.contacted.has(em2)) email.classList.add('ct-email-contacted');
+        else if (isPastDay || _mailScan.contacted.has(em2)) email.classList.add('ct-email-contacted');
         row.append(dot,email,role,copyIcon);
         const emDupSrc=dupSourceFor('email',c.email,curKey);
         if(emDupSrc){
