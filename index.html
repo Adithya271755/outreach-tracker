@@ -1083,6 +1083,12 @@ body.resizing, body.resizing * { transition:none !important; user-select:none !i
    Indicators live on the COMPANY row, not the contact row.
    - contacted: small green chip next to the "N contacts" count
    - replied: same chip + a soft green box around the whole company card */
+@keyframes coItemIn { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
+@keyframes coChipIn { from { opacity:0; transform:scale(0.8); } to { opacity:1; transform:scale(1); } }
+.co-item.co-cascade { animation:coItemIn 0.22s ease both; }
+.co-status-chip.co-chip-in { animation:coChipIn 0.18s ease both; }
+.co-status-loading { display:inline-flex; align-items:center; justify-content:center; height:16px; padding:0 8px; }
+.co-status-loading-dot { width:5px; height:5px; border-radius:50%; background:rgba(125,201,132,0.35); animation:pulse 0.9s ease-in-out infinite; }
 .co-ct-stack { display:flex; flex-direction:column; align-items:stretch; gap:3px; min-width:72px; }
 .co-ct-stack .co-ct-count { text-align:center; box-sizing:border-box; }
 .co-status-chip { display:inline-flex; align-items:center; justify-content:center; height:16px; padding:0 8px; border-radius:99px; font-size:9px; font-weight:500; letter-spacing:0.2px; flex-shrink:0; cursor:default; box-sizing:border-box; }
@@ -3023,8 +3029,10 @@ function renderCompanyList() {
     const el=document.createElement('div'); el.className='co-empty'; el.textContent='No companies logged yet';
     root.appendChild(el); return;
   }
+  const cascadeBase = 70; // ms between each row
   dd.companies.forEach((co,idx)=>{
-    const item=document.createElement('div'); item.className='co-item';
+    const item=document.createElement('div'); item.className='co-item co-cascade';
+    item.style.animationDelay = (idx * cascadeBase) + 'ms';
     const hdr=document.createElement('div'); hdr.className='co-header';
     const logo=makeLogo(co.domain);
     const name=document.createElement('div'); name.className='co-domain'; name.textContent=cleanDomain(co.domain)||'—';
@@ -3121,7 +3129,23 @@ function renderCompanyList() {
     // text instead of next to it.
     const countStack = document.createElement('div'); countStack.className = 'co-ct-stack';
     countStack.appendChild(count);
-    if (coStatus) countStack.appendChild(statusChip);
+    if (coStatus === 'contacted' && isPastDay) {
+      // Show pulsing dot first, then swap in the chip after the row's cascade delay.
+      const loadingEl = document.createElement('span'); loadingEl.className = 'co-status-loading';
+      const dot = document.createElement('span'); dot.className = 'co-status-loading-dot';
+      loadingEl.appendChild(dot);
+      countStack.appendChild(loadingEl);
+      const chipDelay = idx * cascadeBase + 320;
+      setTimeout(() => {
+        if (!countStack.isConnected) return;
+        loadingEl.remove();
+        statusChip.className = 'co-status-chip co-status-contacted co-chip-in';
+        statusChip.textContent = 'contacted';
+        countStack.appendChild(statusChip);
+      }, chipDelay);
+    } else if (coStatus) {
+      countStack.appendChild(statusChip);
+    }
     if(!isReadOnly) hdr.append(logo,name,countStack,arrow,edit,del);
     else            hdr.append(logo,name,countStack,arrow);
 
