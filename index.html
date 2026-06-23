@@ -2766,6 +2766,7 @@ async function scanMailboxesIfNeeded(force) {
   if (_mailScanInflight) return _mailScanInflight;
   _mailScan.scanning = true;
   updateScanBadge();
+  priorityScanVisible().catch(() => {});
   _mailScanInflight = doScan().finally(() => {
     _mailScanInflight = null;
     _mailScan.scanning = false;
