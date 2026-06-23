@@ -90,6 +90,26 @@ Security note: this is still a static client app with OAuth tokens and Supabase 
 - Contacted detection supports CC-copy workflows: Gmail inbox scans add visible `To`/`Cc` recipients to the contacted set, while excluding connected/login mailbox addresses. It also falls back to Gmail search for tracked contact emails, because forwarded/tracking copies can make Gmail search find a lead even when the lead is not exposed in message headers. The scan badge can be clicked to force a fresh mailbox scan, and `window.otDebugMailScan(email)` reports whether a specific email is currently in the contacted/replied sets.
 - Do not infer `contacted` from the day being in the past. A June 23, 2026 bug showed every June 22 company as contacted because `renderCompanyList()` set `coStatus = 'contacted'` for `curKey < today`. Contacted/replied UI must come only from mailbox evidence. If a mailbox scan fails, clear mailbox-derived chips instead of showing partial/stale matches.
 
+## Claude/Codex Handoff Log
+
+Decisions one agent made that the other later overruled — read this before touching contacted/scan logic.
+
+### priorityScanVisible() — do NOT remove (Claude overruled Codex, commit de04ee3, 2026-06-23)
+
+Codex removed the `priorityScanVisible()` call from `scanMailboxesIfNeeded()` as part of the false-positive fix (commit 822fc2d). Claude restored it one session later.
+
+- `priorityScanVisible()` fires parallel Gmail searches for only the contacts visible on the current date. Results come back in ~500ms. Without it, the full scan harvests up to 500 sent + 500 inbox messages sequentially — takes 4-5 minutes before any chips appear.
+- The false-positive bug (all past-day contacts showing contacted) was caused by the `isPastDay` heuristic in `renderCompanyList()`, NOT by `priorityScanVisible()`. Those are independent.
+- Rule going forward: `priorityScanVisible()` must always be called concurrently at the start of `scanMailboxesIfNeeded()`. If you remove it for any reason, document why here first.
+
+### isPastDay heuristic — permanently banned (Claude introduced, Codex correctly removed, 2026-06-23)
+
+Claude added `const isPastDay = curKey < dateKey(todayIdx())` and used it to auto-show `contacted` for all past-day companies. Codex correctly removed it. Do not re-add any date-based inference for contacted status. Contacted/replied must come only from `_mailScan.contacted` / `_mailScan.replied`. Reason: users log companies before sending — past day in tracker does not mean email was sent.
+
+### Outcome dot on contact rows — removed by user request (Claude added, user rejected, 2026-06-20)
+
+Claude added a clickable outcome chip (`·` / `S` / `I` / etc.) to each contact row in `renderCompanyList()` as a manual "mark sent" workaround. User did not want the dot UI. Removed same session. The `OUTCOME_RING` / `OUTCOME_META` / `renderOutcomeChip()` scaffolding still exists in the codebase but is not rendered in contact rows. Do not re-add UI to contact rows without user asking.
+
 ## Working Rules
 
 - Keep changes scoped. This is a large single-file app, so use `rg` to find anchors and read wide relevant ranges before editing.
