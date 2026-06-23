@@ -88,6 +88,7 @@ Security note: this is still a static client app with OAuth tokens and Supabase 
 - Hover-flicker fix shipped in prior Claude work: `renderCompanyList()` uses live `:hover` checks instead of mutable hover flags.
 - Warm-up archive is Microsoft-focused and detects Reach Inbox watermark text including `Aggressive-Chamois`.
 - Contacted detection supports CC-copy workflows: Gmail inbox scans add visible `To`/`Cc` recipients to the contacted set, while excluding connected/login mailbox addresses. It also falls back to Gmail search for tracked contact emails, because forwarded/tracking copies can make Gmail search find a lead even when the lead is not exposed in message headers. The scan badge can be clicked to force a fresh mailbox scan, and `window.otDebugMailScan(email)` reports whether a specific email is currently in the contacted/replied sets.
+- Do not infer `contacted` from the day being in the past. A June 23, 2026 bug showed every June 22 company as contacted because `renderCompanyList()` set `coStatus = 'contacted'` for `curKey < today`. Contacted/replied UI must come only from mailbox evidence. If a mailbox scan fails, clear mailbox-derived chips instead of showing partial/stale matches.
 
 ## Working Rules
 

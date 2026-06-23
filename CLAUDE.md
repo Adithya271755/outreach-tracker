@@ -252,3 +252,12 @@ concrete — what happened, what to do instead.
   contact-row location. Use `window.otDebugMailScan("email@domain.com")` after
   a forced rescan, then inspect `renderCompanyList()` around the `coStatus`
   and `statusChip` logic.
+- **June 23, 2026 contacted false-positive fix**: A later frontend rule made
+  every past day look contacted: `renderCompanyList()` set `coStatus =
+  'contacted'` whenever `curKey < dateKey(todayIdx())`, and also colored
+  contact emails green for `isPastDay`. This caused June 22 leads to show
+  contacted even when Gmail search proved they were never contacted. Codex
+  removed the past-day inference and the delayed fake contacted chip path.
+  Contacted/replied UI must come only from `_mailScan.contacted` /
+  `_mailScan.replied`. Codex also changed failed mailbox scans to clear
+  mailbox-derived chips instead of showing partial/stale matches.

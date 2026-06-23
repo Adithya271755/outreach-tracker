@@ -2766,9 +2766,6 @@ async function scanMailboxesIfNeeded(force) {
   if (_mailScanInflight) return _mailScanInflight;
   _mailScan.scanning = true;
   updateScanBadge();
-  // Priority scan: fast parallel lookup for visible contacts only.
-  // Runs concurrently with the full scan so chips appear in ~500ms.
-  priorityScanVisible().catch(() => {});
   _mailScanInflight = doScan().finally(() => {
     _mailScanInflight = null;
     _mailScan.scanning = false;
@@ -2794,7 +2791,9 @@ async function doScan() {
       console.warn('[mailscan] failed for', acc.email, err);
     }
   }
-  _mailScan = { contacted, replied, scannedAt: Date.now(), scanning:false, lastError };
+  _mailScan = lastError
+    ? { contacted: new Set(), replied: new Set(), scannedAt: Date.now(), scanning:false, lastError }
+    : { contacted, replied, scannedAt: Date.now(), scanning:false, lastError };
   // Re-render the tracker so chips appear immediately.
   if (document.getElementById('page-tracker')?.classList.contains('active')) {
     renderCompanyList();
@@ -3046,15 +3045,13 @@ function renderCompanyList() {
     const cc=co.contacts.length;
     const count=document.createElement('div'); count.className='co-ct-count';
     count.textContent=cc+' contact'+(cc!==1?'s':'');
-    // Company-level status: past-day entries always show contacted (sent from any client).
-    // Today's entries rely on mailbox scan. Replied (scan only) overrides contacted.
-    const isPastDay = curKey < dateKey(todayIdx());
-    let coStatus = isPastDay ? 'contacted' : null;
+    // Company-level mailbox-scan status. Replied overrides contacted.
+    let coStatus = null;
     for (const ct of co.contacts) {
       const em = (ct.email || '').toLowerCase().trim();
       if (!em) continue;
       if (_mailScan.replied.has(em)) { coStatus = 'replied'; break; }
-      if (!isPastDay && _mailScan.contacted.has(em)) coStatus = 'contacted';
+      if (_mailScan.contacted.has(em)) coStatus = 'contacted';
     }
     const statusChip = document.createElement('span');
     if (coStatus === 'replied') {
@@ -3108,7 +3105,7 @@ function renderCompanyList() {
         });
         const em2 = (c.email||'').toLowerCase().trim();
         if (_mailScan.replied.has(em2)) email.classList.add('ct-email-contacted','ct-email-replied');
-        else if (isPastDay || _mailScan.contacted.has(em2)) email.classList.add('ct-email-contacted');
+        else if (_mailScan.contacted.has(em2)) email.classList.add('ct-email-contacted');
         row.append(dot,email,role,copyIcon);
         const emDupSrc=dupSourceFor('email',c.email,curKey);
         if(emDupSrc){
@@ -3129,23 +3126,7 @@ function renderCompanyList() {
     // text instead of next to it.
     const countStack = document.createElement('div'); countStack.className = 'co-ct-stack';
     countStack.appendChild(count);
-    if (coStatus === 'contacted' && isPastDay) {
-      // Show pulsing dot first, then swap in the chip after the row's cascade delay.
-      const loadingEl = document.createElement('span'); loadingEl.className = 'co-status-loading';
-      const dot = document.createElement('span'); dot.className = 'co-status-loading-dot';
-      loadingEl.appendChild(dot);
-      countStack.appendChild(loadingEl);
-      const chipDelay = idx * cascadeBase + 320;
-      setTimeout(() => {
-        if (!countStack.isConnected) return;
-        loadingEl.remove();
-        statusChip.className = 'co-status-chip co-status-contacted co-chip-in';
-        statusChip.textContent = 'contacted';
-        countStack.appendChild(statusChip);
-      }, chipDelay);
-    } else if (coStatus) {
-      countStack.appendChild(statusChip);
-    }
+    if (coStatus) countStack.appendChild(statusChip);
     if(!isReadOnly) hdr.append(logo,name,countStack,arrow,edit,del);
     else            hdr.append(logo,name,countStack,arrow);
 
