@@ -2667,7 +2667,35 @@ let _mailScan = { contacted: new Set(), replied: new Set(), scannedAt: 0, scanni
 let _mailScanInflight = null;
 let _priorityScanRunning = false;
 let _priorityScanPollTimer = null;
+let _googleSilentTokenClient = null;
 const MAIL_SCAN_TTL = 5 * 60 * 1000;
+
+// Silently refresh Google OAuth token using existing browser session (no popup).
+// Returns the new access token, or throws if the Google session has ended.
+async function tryRefreshGoogleToken() {
+  return new Promise((resolve, reject) => {
+    if (typeof google === 'undefined') { reject(new Error('GSI not loaded')); return; }
+    const GOOGLE_CLIENT_ID_R = '551201525725-c2pjulu9ta3kqpmhmvut4192ik43gg5r.apps.googleusercontent.com';
+    const GOOGLE_SCOPE_R = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email';
+    if (!_googleSilentTokenClient) {
+      _googleSilentTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID_R,
+        scope: GOOGLE_SCOPE_R,
+        callback: (resp) => {
+          if (resp.error) { reject(new Error(resp.error)); return; }
+          // Persist the refreshed token so future calls don't re-fetch
+          try {
+            const arr = JSON.parse(localStorage.getItem('ot_email_accounts') || '[]');
+            const idx = arr.findIndex(a => a.provider === 'google');
+            if (idx >= 0) { arr[idx].token = resp.access_token; arr[idx].tokenExpiry = Date.now() + 3590000; localStorage.setItem('ot_email_accounts', JSON.stringify(arr)); }
+          } catch(_) {}
+          resolve(resp.access_token);
+        },
+      });
+    }
+    _googleSilentTokenClient.requestAccessToken({ prompt: '' }); // silent — no popup if Google session alive
+  });
+}
 
 function getConnectedAccounts() {
   try { return JSON.parse(localStorage.getItem('ot_email_accounts') || '[]'); }
@@ -2721,9 +2749,21 @@ function allTrackedContactEmails(excludeEmails) {
 
 async function priorityScanVisible() {
   if (_priorityScanRunning) return;
-  const accounts = getConnectedAccounts();
-  const googleAcc = accounts.find(a => a.provider === 'google');
+  let accounts = getConnectedAccounts();
+  let googleAcc = accounts.find(a => a.provider === 'google');
   if (!googleAcc) return;
+
+  // Proactively refresh if token expired or expires within 5 minutes
+  if (!googleAcc.tokenExpiry || googleAcc.tokenExpiry < Date.now() + 5 * 60 * 1000) {
+    try {
+      const freshToken = await tryRefreshGoogleToken();
+      googleAcc = { ...googleAcc, token: freshToken };
+      accounts = getConnectedAccounts(); // re-read so excludeEmails is up to date
+    } catch(_) {
+      // Silent refresh failed (Google session ended) — fall through and let the 401 surface
+    }
+  }
+
   const excludeEmails = accountEmailSet(accounts);
   const dd = getDayData(cur);
   if (!dd || !dd.companies.length) return;
@@ -4994,10 +5034,15 @@ async function getMicrosoftToken(emailHint) {
           headers: { Authorization: 'Bearer ' + resp.access_token }
         }).then(r => r.json()).then(info => {
           const arr = load();
-          if (!arr.find(a => a.email === info.email)) {
-            arr.push({ provider:'google', email:info.email, token:resp.access_token, connected:Date.now() });
-            save(arr);
+          const existingIdx = arr.findIndex(a => a.email === info.email);
+          const expiry = Date.now() + 3590000;
+          if (existingIdx >= 0) {
+            arr[existingIdx].token = resp.access_token;
+            arr[existingIdx].tokenExpiry = expiry;
+          } else {
+            arr.push({ provider:'google', email:info.email, token:resp.access_token, tokenExpiry:expiry, connected:Date.now() });
           }
+          save(arr);
           renderConnectedAccounts();
         });
       }
