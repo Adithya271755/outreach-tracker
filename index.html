@@ -2666,6 +2666,7 @@ function saveAiDraftToToday(d, btn) {
 let _mailScan = { contacted: new Set(), replied: new Set(), scannedAt: 0, scanning: false, lastError: null };
 let _mailScanInflight = null;
 let _priorityScanRunning = false;
+let _priorityScanPollTimer = null;
 const MAIL_SCAN_TTL = 5 * 60 * 1000;
 
 function getConnectedAccounts() {
@@ -2744,21 +2745,50 @@ async function priorityScanVisible() {
 
   // Fire ALL searches simultaneously (parallel = fastest), then reveal top-to-bottom.
   const searches = visible.map(em => Promise.all([
-    gmailHasSearchHit(auth, 'to:' + em + ' OR cc:' + em + ' newer_than:180d').catch(() => false),
-    gmailHasSearchHit(auth, 'in:inbox from:' + em + ' newer_than:180d').catch(() => false),
+    gmailHasSearchHit(auth, 'to:' + em + ' OR cc:' + em + ' newer_than:180d').catch(e => {
+      if (String(e).includes('401')) throw e; // surface auth errors, don't swallow
+      return false;
+    }),
+    gmailHasSearchHit(auth, 'in:inbox from:' + em + ' newer_than:180d').catch(e => {
+      if (String(e).includes('401')) throw e;
+      return false;
+    }),
   ]));
 
-  let anyUpdate = false;
-  for (let i = 0; i < searches.length; i++) {
-    const [toHit, fromHit] = await searches[i]; // awaited in order for top-to-bottom reveal
-    if (fromHit) { _mailScan.replied.add(visible[i]); _mailScan.contacted.add(visible[i]); anyUpdate = true; }
-    else if (toHit) { _mailScan.contacted.add(visible[i]); anyUpdate = true; }
-    if (anyUpdate && document.getElementById('page-tracker')?.classList.contains('active')) {
-      renderCompanyList();
-      anyUpdate = false;
+  try {
+    let anyUpdate = false;
+    for (let i = 0; i < searches.length; i++) {
+      const [toHit, fromHit] = await searches[i]; // awaited in order for top-to-bottom reveal
+      if (fromHit) { _mailScan.replied.add(visible[i]); _mailScan.contacted.add(visible[i]); anyUpdate = true; }
+      else if (toHit) { _mailScan.contacted.add(visible[i]); anyUpdate = true; }
+      if (anyUpdate && document.getElementById('page-tracker')?.classList.contains('active')) {
+        renderCompanyList();
+        anyUpdate = false;
+      }
     }
+  } catch(e) {
+    // Auth token expired — mark scan failed so badge shows "Reconnect mailbox"
+    if (String(e).includes('401')) {
+      _mailScan = { contacted: new Set(), replied: new Set(), scannedAt: _mailScan.scannedAt, scanning: false, lastError: 'Token expired. Reconnect mailbox.' };
+      updateScanBadge();
+    }
+  } finally {
+    _priorityScanRunning = false;
   }
-  _priorityScanRunning = false;
+}
+
+function startPriorityScanPoller() {
+  if (_priorityScanPollTimer) return; // already running
+  _priorityScanPollTimer = setInterval(() => {
+    if (!document.getElementById('page-tracker')?.classList.contains('active')) return;
+    priorityScanVisible().catch(() => {});
+  }, 60 * 1000); // every 60 seconds
+  // Also scan immediately when user returns to the tab
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      priorityScanVisible().catch(() => {});
+    }
+  });
 }
 
 async function scanMailboxesIfNeeded(force) {
@@ -4851,6 +4881,7 @@ async function getMicrosoftToken(emailHint) {
     if (pageId === 'tracker') {
       // Kick off the mailbox scan in the background; renderCompanyList re-runs when it completes.
       try { scanMailboxesIfNeeded(); } catch(_){}
+      startPriorityScanPoller();
     }
   }
 
