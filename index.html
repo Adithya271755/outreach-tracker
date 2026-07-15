@@ -158,6 +158,9 @@ body.panel-open { margin-right: calc(var(--dp-w) + 16px); }
 .ct-copy { opacity:0; background:none; border:none; color:#555; cursor:pointer; font-size:11px; padding:1px 4px; border-radius:3px; line-height:1; transition:opacity 0.12s, color 0.12s; flex-shrink:0; font-family:inherit; }
 .ct-row:hover .ct-copy { opacity:1; }
 .ct-copy:hover { color:#aaa; }
+.ct-open { opacity:0; background:none; border:none; color:#555; cursor:pointer; font-size:11px; padding:1px 4px; border-radius:3px; line-height:1; transition:opacity 0.12s, color 0.12s; flex-shrink:0; font-family:inherit; }
+.ct-row:hover .ct-open { opacity:1; }
+.ct-open:hover { color:#aaa; }
 .ct-draft-badge { font-size:9px; color:var(--amber); background:rgba(251,191,36,0.1); padding:1px 6px; border-radius:99px; border:1px solid rgba(251,191,36,0.2); flex-shrink:0; }
 .ct-review-badge { font-size:9px; color:var(--green); background:rgba(74,222,128,0.1); padding:1px 6px; border-radius:99px; border:1px solid rgba(74,222,128,0.25); flex-shrink:0; }
 .co-no-contacts { font-size:11px; color:#2e2e2e; }
@@ -2165,6 +2168,39 @@ function loadLocalData(email) {
   } catch(_){}
 }
 
+function saveLocalData(email, data, ts) {
+  try {
+    const key = emailStorageKey(email);
+    const s = JSON.stringify(data);
+    localStorage.setItem(key, s);
+    localStorage.setItem(key+'_bak', s);
+    localStorage.setItem(key+'_ts', ts || new Date().toISOString());
+    sessionStorage.setItem(key+'_sess', s);
+  } catch(_){}
+}
+
+async function loadRemoteUserData(email) {
+  if (!sb || !email) return false;
+  try {
+    const { data, error } = await sb
+      .from('user_data')
+      .select('data,updated_at')
+      .eq('email', email)
+      .maybeSingle();
+    if (error) {
+      console.warn('Supabase user_data load failed:', error.message || error.details || JSON.stringify(error));
+      return false;
+    }
+    if (!data || !data.data || typeof data.data.t !== 'number' || !data.data.d) return false;
+    D = data.data;
+    saveLocalData(email, D, data.updated_at);
+    return true;
+  } catch(e) {
+    console.warn('Supabase user_data unavailable:', e);
+    return false;
+  }
+}
+
 function persist() {
   if (isReadOnly || isPortalViewing) return;
   const key = emailStorageKey(currentUserEmail);
@@ -3174,10 +3210,18 @@ function renderCompanyList() {
             copyIcon.textContent='✓'; setTimeout(()=>{ copyIcon.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'; },1200);
           });
         });
+        const openIcon=document.createElement('button'); openIcon.className='ct-open'; openIcon.title='Search email on Google (opens LinkedIn) in a new tab';
+        openIcon.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
+        openIcon.addEventListener('click',e=>{
+          e.stopPropagation();
+          const addr=(c.email||'').trim();
+          if(!addr) return;
+          window.open('https://www.google.com/search?q='+encodeURIComponent(addr),'_blank');
+        });
         const em2 = (c.email||'').toLowerCase().trim();
         if (_mailScan.replied.has(em2)) email.classList.add('ct-email-contacted','ct-email-replied');
         else if (_mailScan.contacted.has(em2)) email.classList.add('ct-email-contacted');
-        row.append(dot,email,role,copyIcon);
+        row.append(dot,email,role,copyIcon,openIcon);
         const emDupSrc=dupSourceFor('email',c.email,curKey);
         if(emDupSrc){
           const dchip=document.createElement('span'); dchip.className='ct-dup-chip';
@@ -4792,8 +4836,9 @@ function exitPortalView() {
   }
   isOwner = (currentUserEmail === OWNER_EMAIL);
 
-  // Load this user's data
+  // Load local first for speed, then let Supabase refresh it before first render.
   loadLocalData(currentUserEmail);
+  await loadRemoteUserData(currentUserEmail);
 
   // Init sidebar
   initSidebar(currentUserEmail);
