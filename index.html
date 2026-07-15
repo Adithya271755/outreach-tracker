@@ -3217,11 +3217,10 @@ function renderCompanyList() {
           const addr=(c.email||'').trim();
           if(!addr) return;
           // Open in a BACKGROUND tab so focus stays on the tracker.
-          // Simulate a cmd/ctrl-click on a real link (cmd on macOS, ctrl elsewhere).
+          // Open the new tab, then blur it and pull focus back to this window.
           const url='https://www.google.com/search?q='+encodeURIComponent(addr);
-          const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener';
-          const onMac=/Mac|iPhone|iPad|iPod/.test(navigator.platform)||/Mac/.test(navigator.userAgent);
-          a.dispatchEvent(new MouseEvent('click',{bubbles:false,cancelable:true,metaKey:onMac,ctrlKey:!onMac}));
+          const w=window.open(url,'_blank');
+          try { if(w){ w.blur(); } window.focus(); window.self.focus(); } catch(_){}
         });
         const em2 = (c.email||'').toLowerCase().trim();
         if (_mailScan.replied.has(em2)) email.classList.add('ct-email-contacted','ct-email-replied');
